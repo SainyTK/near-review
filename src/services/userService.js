@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const getProfile = async (account) => {
     try {
-        const ipfsHash = await window.contract.getProfile({ account })
+        const ipfsHash = await window.contract.get_profile_of({ account_id: account })
         const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data);
         return { ...ipfsData, ipfsHash }
     } catch (e) {
@@ -12,7 +12,7 @@ const getProfile = async (account) => {
 }
 
 const updateProfile = async (ipfsHash) => {
-    return window.contract.updateProfile({ ipfsHash });
+    return window.contract.update_profile({ ipfs_hash: ipfsHash });
 }
 
 export default {

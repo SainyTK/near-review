@@ -28,7 +28,7 @@ impl Default for ReviewContract {
     fn default() -> Self {
         Self {
             products_of: UnorderedMap::new(vec![0]),
-            profile_of: UnorderedMap::new(vec![0]),
+            profile_of: UnorderedMap::new(vec![1])
         }
     }
 }
@@ -94,6 +94,11 @@ impl ReviewContract {
         }
     }
 
+    pub fn update_profile(&mut self, ipfs_hash: String) {
+        let account_id = env::signer_account_id();
+        self.profile_of.insert(&account_id, &ipfs_hash);
+    }
+
     pub fn get_all_products(self) -> Vec<(u32, String, String, u128, u128, bool)> {
         self.products_of.iter().flat_map(|product_list| {
             product_list.1.iter().map(|product| {
@@ -130,5 +135,9 @@ impl ReviewContract {
                 }
             }
         }
+    }
+
+    pub fn get_profile_of(self, account_id: String) -> Option<String> {
+        self.profile_of.get(&account_id)
     }
 }

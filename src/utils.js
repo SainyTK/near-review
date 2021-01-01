@@ -3,14 +3,16 @@ import getConfig from './config'
 
 const nearConfig = getConfig(process.env.NODE_ENV || 'development')
 
+console.log(nearConfig.contractName)
+
 export async function initContract() {
   const near = await connect(Object.assign({ deps: { keyStore: new keyStores.BrowserLocalStorageKeyStore() } }, nearConfig))
   window.walletConnection = new WalletConnection(near)
   window.accountId = window.walletConnection.getAccountId()
 
   window.contract = await new Contract(window.walletConnection.account(), nearConfig.contractName, {
-    viewMethods: ['get_all_products', 'get_products_of', 'get_product_of'],
-    changeMethods: ['create_product', 'update_product'],
+    viewMethods: ['get_all_products', 'get_products_of', 'get_product_of', 'get_profile_of'],
+    changeMethods: ['create_product', 'update_product', 'update_profile'],
   })
 }
 
