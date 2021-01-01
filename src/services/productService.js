@@ -4,10 +4,9 @@ import axios from 'axios';
 const getAllProducts = async () => {
     try {
         const contractData = await window.contract.get_all_products();
-        console.log(contractData);
         const promises = contractData.map(async data => {
             const [productId, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
-            const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data);
+            const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
             return { productId, owner, ipfsHash, price, reviewValue, allowSelfPurchase, ...ipfsData }
         })
         return Promise.all(promises);
@@ -21,7 +20,7 @@ const getProductsOf = async (account) => {
         const contractData = await window.contract.get_products_of({ account_id: account }) || []
         const promises = contractData.map(async data => {
             const [productId, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
-            const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data);
+            const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
             return { productId, owner, ipfsHash, price, reviewValue, allowSelfPurchase, ...ipfsData }
         })
         return Promise.all(promises);
@@ -33,9 +32,9 @@ const getProductsOf = async (account) => {
 const getProductOf = async (account, productId) => {
     try {
         const data = await window.contract.get_product_of({ account_id: account, product_id: +productId });
-        const [, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
-        const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data);
-        return { productId, owner, ipfsHash, price, reviewValue, allowSelfPurchase, ...ipfsData }
+        const [pid, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
+        const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
+        return { productId: pid, owner, ipfsHash, price, reviewValue, allowSelfPurchase, ...ipfsData }
     } catch (e) {
         throw e;
     }

@@ -7,6 +7,10 @@ import useProductOf from '../../states/useProductOf';
 import CreateOrder from './components/CreateOrder';
 import OpenIssue from './components/OpenIssue';
 import WriteReview from './components/WriteReview';
+import useProductsOf from '../../states/useProductsOf';
+import useOrders from '../../states/useOrders';
+import WaitingOrders from './components/WaitingOrders';
+import OpeningOrders from './components/OpeningOrders';
 
 
 const StyledWrapper = styled.div`
@@ -43,10 +47,16 @@ const ProductPage = () => {
     const [accountId, productId] = search ? search.split('-') : [];
 
     const { product } = useProductOf(accountId, productId);
+    const { products } = useProductsOf(window.accountId);
+    const { orders, onlyCustomer, onlySeller, onlyNotPurchased } = useOrders();
 
-    console.log(accountId, productId)
+    const isCustomer = products && products.length === 0;
+    const isOwner = product && product.owner === window.accountId;
 
-    console.log(product);
+    const notPurchasedOrders = onlyNotPurchased(onlySeller(accountId, orders));
+    const openingOrders = isCustomer ? onlyNotPurchased(onlyCustomer(window.accountId, orders)) : [];
+
+    console.log(openingOrders);
 
     return (
         <StyledWrapper>
@@ -65,14 +75,20 @@ const ProductPage = () => {
                 </Col>
                 <Col sm={{ span: 24, order: 0 }} lg={{ span: 8, order: 1 }}>
                     <Row gutter={[10, 10]}>
-                        <Col span={24}>
+                        <Col span={(isCustomer && openingOrders.length > 0) ? 24 : 0}>
+                            <OpeningOrders orders={openingOrders}/>
+                        </Col>
+                        <Col span={isCustomer ? 24 : 0}>
                             <WriteReview />
                         </Col>
-                        <Col span={24}>
+                        <Col span={24} span={isCustomer ? 24 : 0}>
                             <OpenIssue />
                         </Col>
-                        <Col span={24}>
-                            <CreateOrder />
+                        <Col span={24} span={isOwner ? 24 : 0}>
+                            <CreateOrder product={product} />
+                        </Col>
+                        <Col span={24} span={(isOwner && notPurchasedOrders.length > 0) ? 24 : 0}>
+                            <WaitingOrders orders={notPurchasedOrders} />
                         </Col>
                     </Row>
                 </Col>

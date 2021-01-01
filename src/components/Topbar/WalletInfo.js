@@ -35,7 +35,7 @@ const WalletInfo = (props) => {
 
     return (
         <StyledWrapper {...props}>
-            <span className='balance'>{utils.format.formatNearAmount(balance, 5)} Near</span>
+            <span className='balance'>{utils.format.formatNearAmount(balance, 5)} Ⓝ</span>
             <span className='address'>
                 <Link to='/profile' className='no-style'>
                     {window.accountId}

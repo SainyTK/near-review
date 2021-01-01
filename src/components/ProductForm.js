@@ -172,7 +172,7 @@ const ProductForm = ({ type, ...props }) => {
                                 type='number'
                                 onChange={e => setProduct({ ...product, price: +e.target.value })}
                             />
-                            <span>NEAR</span>
+                            <span>Ⓝ</span>
                         </Space>
                     </div>
                     <div style={{ marginBottom: 16 }}>
@@ -191,7 +191,7 @@ const ProductForm = ({ type, ...props }) => {
                                 type='number'
                                 onChange={e => setProduct({ ...product, reviewValue: +e.target.value })}
                             />
-                            <span>NEAR</span>
+                            <span>Ⓝ</span>
                         </Space>
                     </div>
                     <div style={{ marginBottom: 16 }}>
