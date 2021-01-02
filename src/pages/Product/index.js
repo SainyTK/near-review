@@ -11,6 +11,7 @@ import useProductsOf from '../../states/useProductsOf';
 import useOrders from '../../states/useOrders';
 import WaitingOrders from './components/WaitingOrders';
 import OpeningOrders from './components/OpeningOrders';
+import useReviews from '../../states/useReviews';
 
 
 const StyledWrapper = styled.div`
@@ -44,19 +45,29 @@ const ProductPage = () => {
     const params = useParams();
 
     const { search } = params;
-    const [accountId, productId] = search ? search.split('-') : [];
+    const [seller, productId] = search ? search.split('-') : [];
 
-    const { product } = useProductOf(accountId, productId);
+    const { product } = useProductOf(seller, productId);
     const { products } = useProductsOf(window.accountId);
-    const { orders, onlyCustomer, onlySeller, onlyNotPurchased } = useOrders();
+    const { orders, onlyBetween, onlySeller, onlyNotPurchased, onlyReviewable, onlyReviewed } = useOrders();
+    const { orderReviews } = useReviews();
 
     const isCustomer = products && products.length === 0;
     const isOwner = product && product.owner === window.accountId;
 
-    const notPurchasedOrders = onlyNotPurchased(onlySeller(accountId, orders));
-    const openingOrders = isCustomer ? onlyNotPurchased(onlyCustomer(window.accountId, orders)) : [];
+    const sellerOrders = onlySeller(seller, orders);
+    const customerOrders = isCustomer ? onlyBetween(window.accountId, seller, orders) : [];
 
-    console.log(openingOrders);
+    const notPurchasedOrders = onlyNotPurchased(sellerOrders);
+
+    const openingOrders = onlyNotPurchased(customerOrders);
+    const reviewableOrders = onlyReviewable(customerOrders);
+
+    const reviewedOrders = onlyReviewed(sellerOrders);
+
+    const reviews = orderReviews(reviewedOrders);
+
+    console.log(reviews);
 
     return (
         <StyledWrapper>
@@ -79,7 +90,7 @@ const ProductPage = () => {
                             <OpeningOrders orders={openingOrders}/>
                         </Col>
                         <Col span={isCustomer ? 24 : 0}>
-                            <WriteReview />
+                            <WriteReview orders={reviewableOrders}/>
                         </Col>
                         <Col span={24} span={isCustomer ? 24 : 0}>
                             <OpenIssue />

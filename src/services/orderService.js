@@ -23,7 +23,19 @@ const getOrders = async () => {
             const [orderId, seller, productId, customer, price, reviewValue, ipfsHash, purchasedAt, reviewedAt, gaveHelpfulAt] = data;
             console.log(ipfsHash);
             const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}))
-            return { orderId, seller, productId, customer, price: price / 1e+24, reviewValue, ipfsHash, purchasedAt, reviewedAt, gaveHelpfulAt, ...ipfsData }
+            return {
+                orderId,
+                seller,
+                productId,
+                customer,
+                price: price / 1e+24,
+                reviewValue,
+                ipfsHash,
+                purchasedAt: purchasedAt / 1000000,
+                reviewedAt: reviewedAt / 1000000,
+                gaveHelpfulAt: gaveHelpfulAt / 1000000,
+                ...ipfsData
+            }
         });
         return Promise.all(promises);
     } catch (e) {

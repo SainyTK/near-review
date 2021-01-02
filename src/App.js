@@ -13,6 +13,7 @@ import ProfilePage from './pages/Profile';
 import SettingProfilePage from './pages/SettingProfile';
 import ProductPage from './pages/Product';
 import styled from 'styled-components';
+import ReviewPage from './pages/Review';
 
 const ContentWrapper = styled.div`
   width: 100%;
@@ -27,6 +28,7 @@ export default function App() {
       <Topbar />
       <ContentWrapper>
         <Switch>
+          <Route path='/products/:search/review' component={ReviewPage} />
           <Route path='/products/:search' component={ProductPage} />
           <Route path='/settingProfile' component={SettingProfilePage} />
           <Route path='/profile' component={ProfilePage} />

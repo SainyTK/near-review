@@ -13,6 +13,14 @@ const useOrders = () => {
         return orders ? orders.filter(o => o.purchasedAt > 0) : [];
     }
 
+    const onlyReviewed = (orders) => {
+        return orders ? orders.filter(o => o.reviewedAt > 0) : [];
+    }
+
+    const onlyReviewable = (orders) => {
+        return orders ? orders.filter(o => o.purchasedAt > 0 && o.reviewedAt === 0) : [];
+    }
+
     const onlyCustomer = (customer, orders) => {
         return orders ? orders.filter(o => customer === o.customer) : [];
     }
@@ -32,9 +40,11 @@ const useOrders = () => {
         update: () => mutate(key),
         onlyNotPurchased,
         onlyPurchased,
+        onlyReviewed,
         onlyCustomer,
         onlySeller,
-        onlyBetween
+        onlyBetween,
+        onlyReviewable
     }
 }
 

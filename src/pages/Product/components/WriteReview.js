@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import svgReviewing from '../../../assets/images/reviewing.svg';
-import { Button, Rate } from 'antd';
+import { Button, Rate, Modal } from 'antd';
+import useVisibility from '../../../hooks/useVisibility';
+import OrderCard from './OrderCard';
+import { useHistory, useParams } from 'react-router-dom';
 
 const StyledWrapper = styled.div`
     box-shadow: 0 0 6px 0 rgba(0,0,0,.15);
@@ -32,7 +35,24 @@ const StyledWrapper = styled.div`
 
 `
 
-const WriteReview = (props) => {
+const WriteReview = ({ orders, ...props }) => {
+
+    const numOrders = orders ? orders.length : 0;
+    const disabled = !orders || numOrders <= 0;
+
+    const history = useHistory();
+    const params = useParams();
+
+    console.log(params);
+
+    const modal = useVisibility();
+    const [selected, setSelected] = useState(0);
+
+    const handleWriteReview = () => {
+        const order = orders[selected]
+        history.push(`/products/${params.search}/review?orderId=${order.orderId}`);
+    }
+
     return (
         <StyledWrapper className={props.className} style={props.style}>
             <div className='card-text'>
@@ -40,11 +60,36 @@ const WriteReview = (props) => {
                 <div className='rating-container'>
                     <Rate value={4.5} />
                 </div>
-                <Button onClick={props.onClick}>Write</Button>
+                <Button
+                    onClick={modal.show}
+                    type='primary'
+                    disabled={disabled}
+                >
+                    {disabled ? "Please purchase a product" : `Write ${numOrders > 1 ? `(${numOrders})` : ``}`}
+                </Button>
             </div>
             <div className='svg-img'>
                 <img src={svgReviewing} />
             </div>
+            <Modal
+                title="Select an order"
+                onOk={handleWriteReview}
+                visible={modal.visible}
+                onCancel={modal.hide}
+            >
+                {
+                    orders && orders.map((o, index) => (
+                        <div key={index} style={{ marginBottom: 18 }}>
+                            <OrderCard
+                                order={o}
+                                type='write-review'
+                                selected={index === selected}
+                                onClick={() => setSelected(index)}
+                            />
+                        </div>
+                    ))
+                }
+            </Modal>
         </StyledWrapper>
     )
 }

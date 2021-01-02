@@ -64,7 +64,7 @@ const WaitingOrders = (props) => {
                     {
                         orders && orders.map((o, index) => (
                             <Col key={index} span={24}>
-                                <OrderCard order={o} type='seller'/>
+                                <OrderCard order={o} type='display'/>
                             </Col>
                         ))
                     }
