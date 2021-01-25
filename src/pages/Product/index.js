@@ -12,6 +12,7 @@ import useOrders from '../../states/useOrders';
 import WaitingOrders from './components/WaitingOrders';
 import OpeningOrders from './components/OpeningOrders';
 import useReviews from '../../states/useReviews';
+import ReviewList from './components/ReviewList';
 
 
 const StyledWrapper = styled.div`
@@ -82,15 +83,15 @@ const ProductPage = () => {
             </div>
             <Row gutter={[10, 10]}>
                 <Col sm={{ span: 24, order: 1 }} lg={{ span: 16, order: 0 }}>
-
+                    <ReviewList reviews={reviews} />
                 </Col>
                 <Col sm={{ span: 24, order: 0 }} lg={{ span: 8, order: 1 }}>
                     <Row gutter={[10, 10]}>
                         <Col span={(isCustomer && openingOrders.length > 0) ? 24 : 0}>
-                            <OpeningOrders orders={openingOrders}/>
+                            <OpeningOrders orders={openingOrders} />
                         </Col>
                         <Col span={isCustomer ? 24 : 0}>
-                            <WriteReview orders={reviewableOrders}/>
+                            <WriteReview orders={reviewableOrders} />
                         </Col>
                         <Col span={24} span={isCustomer ? 24 : 0}>
                             <OpenIssue />

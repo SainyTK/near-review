@@ -38,12 +38,10 @@ const StyledWrapper = styled.div`
 const WriteReview = ({ orders, ...props }) => {
 
     const numOrders = orders ? orders.length : 0;
-    const disabled = !orders || numOrders <= 0;
+    const disabled = !orders || numOrders <= 0 || !window.accountId;
 
     const history = useHistory();
     const params = useParams();
-
-    console.log(params);
 
     const modal = useVisibility();
     const [selected, setSelected] = useState(0);
@@ -51,6 +49,16 @@ const WriteReview = ({ orders, ...props }) => {
     const handleWriteReview = () => {
         const order = orders[selected]
         history.push(`/products/${params.search}/review?orderId=${order.orderId}`);
+    }
+
+    const renderActionText = () => {
+        if (!window.accountId) {
+            return "Please login";
+        } else if (!orders || numOrders <= 0) {
+            return "Please purchase a product"
+        } else {
+            return  `Write ${numOrders > 1 ? `(${numOrders})` : ``} `;
+        }
     }
 
     return (
@@ -65,7 +73,7 @@ const WriteReview = ({ orders, ...props }) => {
                     type='primary'
                     disabled={disabled}
                 >
-                    {disabled ? "Please purchase a product" : `Write ${numOrders > 1 ? `(${numOrders})` : ``}`}
+                    {renderActionText()}
                 </Button>
             </div>
             <div className='svg-img'>
