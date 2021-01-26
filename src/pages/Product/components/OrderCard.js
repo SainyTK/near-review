@@ -39,7 +39,7 @@ const OrderCard = ({ order, selected, ...props }) => {
     }
 
     const handleClick = () => {
-        if (type === 'write-review') {
+        if (type === 'write-review' || type === 'give-helpful') {
             props.onClick && props.onClick();
         }
     }
@@ -47,7 +47,7 @@ const OrderCard = ({ order, selected, ...props }) => {
     return (
         <StyledWrapper
             onClick={handleClick}
-            style={{ cursor: type === 'write-review' ? 'pointer' : 'none' }}
+            style={{ cursor: ['write-review', 'give-helpful'].includes(type)  ? 'pointer' : 'none' }}
             selected={selected}
         >
             <Row gutter={[10, 10]}>
@@ -66,7 +66,7 @@ const OrderCard = ({ order, selected, ...props }) => {
                 <Col span={6}><b>Review Value</b></Col>
                 <Col span={18}>{reviewValue} |NEAR|</Col>
                 {
-                    type === 'write-review' && (
+                    ['write-review', 'give-helpful'].includes(type) && (
                         <>
                             <Col span={6}><b>Purchased at</b></Col>
                             <Col span={18}>{formatDate(purchasedAt)}</Col>

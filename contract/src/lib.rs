@@ -57,9 +57,23 @@ impl Order {
 }
 
 #[derive(Default, BorshDeserialize, BorshSerialize)]
+pub struct Comment {
+    owner: String,
+    ipfs_hash: String
+}
+
+#[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct Review {
     order_id: u64,
-    ipfs_hash: String
+    ipfs_hash: String,
+    helpfuls: Vec<String>,
+    comments: Vec<Comment>
+}
+
+impl Review {
+    fn new(order_id: u64, ipfs_hash: String) -> Self {
+        Self { order_id, ipfs_hash, helpfuls: vec![], comments: vec![]}
+    }
 }
 
 #[near_bindgen]
@@ -68,7 +82,7 @@ pub struct ReviewContract {
     products_of: UnorderedMap<String, Vec<Product>>,
     profile_of: UnorderedMap<String, String>,
     orders: Vector<Order>,
-    reviews: Vector<Review>
+    reviews: UnorderedMap<u64, Review>,
 }
 
 impl Default for ReviewContract {
@@ -77,7 +91,7 @@ impl Default for ReviewContract {
             products_of: UnorderedMap::new(vec![0]),
             profile_of: UnorderedMap::new(vec![1]),
             orders: Vector::new(vec![2]),
-            reviews: Vector::new(vec![3])
+            reviews: UnorderedMap::new(vec![3])
         }
     }
 }
@@ -170,8 +184,8 @@ impl ReviewContract {
                 assert!(order.purchased_at > 0, "Please purchase a product first");
                 assert!(order.reviewed_at == 0, "A purchased order can be used to review once");
 
-                let review = Review { order_id, ipfs_hash };
-                self.reviews.push(&review);
+                let review = Review::new(order_id, ipfs_hash);
+                self.reviews.insert(&order_id, &review);
 
                 let now = env::block_timestamp();
                 order.reviewed_at = now;
@@ -255,7 +269,49 @@ impl ReviewContract {
         }
     }
 
-    pub fn get_all_products(self) -> Vec<(u64, String, String, u128, u128, bool)> {
+    pub fn give_helpful(&mut self, order_id: u64, target_id: u64) {
+        let order = self.orders.get(order_id as u64);
+        let target = self.orders.get(target_id as u64);
+        match order {
+            None => {
+                assert!(false, "Order not found");
+            }
+            Some(mut order) => {
+                match target {
+                    None => {
+                        assert!(false, "Target not found");
+                    }
+                    Some(target) => {
+                        let account_id = env::signer_account_id();
+                        assert!(order.customer == account_id, "This is not your orders");
+                        assert!(order.seller == target.seller && order.product_id == target.product_id, "Not the same product");
+                        assert!(order.customer != target.customer, "Cannot give yourself score");
+                        assert!(order.purchased_at > 0, "Please purchase a product first");
+                        assert!(order.gave_helpful_at == 0, "This order was already used to give a helpful score");
+
+                        let review = self.reviews.get(&target_id);
+                        match review {
+                            None => {
+                                assert!(false, "Not found review");
+                            } Some (mut review) => {
+                                review.helpfuls.push(account_id);
+                                let ts_now = env::block_timestamp();
+                                order.gave_helpful_at = ts_now;
+    
+                                Promise::new(target.customer.clone()).transfer(order.review_value);
+    
+                                self.orders.replace(order_id as u64, &order);
+                                self.reviews.insert(&target_id, &review);
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn get_all_products(self) -> Vec<(u64, String, String, U128, U128, bool)> {
         self.products_of
             .iter()
             .flat_map(|product_list| {
@@ -275,12 +331,12 @@ impl ReviewContract {
                             *product_id,
                             owner.clone(),
                             ipfs_hash.clone(),
-                            *price,
-                            *review_value,
+                            U128::from(*price),
+                            U128::from(*review_value),
                             *allow_self_purchase,
                         )
                     })
-                    .collect::<Vec<(u64, String, String, u128, u128, bool)>>()
+                    .collect::<Vec<(u64, String, String, U128, U128, bool)>>()
             })
             .collect()
     }
@@ -288,7 +344,7 @@ impl ReviewContract {
     pub fn get_products_of(
         self,
         account_id: String,
-    ) -> Option<Vec<(u64, String, String, u128, u128, bool)>> {
+    ) -> Option<Vec<(u64, String, String, U128, U128, bool)>> {
         let products = self.products_of.get(&account_id);
         match products {
             None => None,
@@ -308,8 +364,8 @@ impl ReviewContract {
                             *product_id,
                             owner.clone(),
                             ipfs_hash.clone(),
-                            *price,
-                            *review_value,
+                            U128::from(*price),
+                            U128::from(*review_value),
                             *allow_self_purchase,
                         )
                     })
@@ -322,7 +378,7 @@ impl ReviewContract {
         self,
         account_id: String,
         product_id: u64,
-    ) -> Option<(u64, String, String, u128, u128, bool)> {
+    ) -> Option<(u64, String, String, U128, U128, bool)> {
         let products = self.products_of.get(&account_id);
         match products {
             None => None,
@@ -341,8 +397,8 @@ impl ReviewContract {
                         *product_id,
                         owner.clone(),
                         ipfs_hash.clone(),
-                        *price,
-                        *review_value,
+                        U128::from(*price),
+                        U128::from(*review_value),
                         *allow_self_purchase,
                     ))
                 } else {
@@ -356,7 +412,7 @@ impl ReviewContract {
         self.profile_of.get(&account_id)
     }
 
-    pub fn get_orders(self) -> Vec<(u64, String, u64, String, u128, u128, String, u64, u64, u64)> {
+    pub fn get_orders(self) -> Vec<(u64, String, u64, String, U128, U128, String, u64, u64, u64)> {
         self.orders
             .iter()
             .map(|o| {
@@ -377,8 +433,8 @@ impl ReviewContract {
                     seller,
                     product_id,
                     customer,
-                    price,
-                    review_value,
+                    U128::from(price),
+                    U128::from(review_value),
                     ipfs_hash,
                     purchased_at,
                     reviewed_at,
@@ -388,10 +444,10 @@ impl ReviewContract {
             .collect()
     }
 
-    pub fn get_reviews(self) -> Vec<(u64, String)> {
+    pub fn get_reviews(self) -> Vec<(u64, String, Vec<String>)> {
         self.reviews.iter().map(|review| {
-            let Review { order_id, ipfs_hash } = review;
-            (order_id, ipfs_hash)
+            let Review { order_id, ipfs_hash, helpfuls, comments: _ } = review.1;
+            (order_id, ipfs_hash, helpfuls)
         }).collect()
     }
 }

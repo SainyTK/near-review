@@ -55,7 +55,7 @@ const CreateOrder = (props) => {
                     const res = await ipfs.uploadObject({ note });
                     ipfsHash = res[0].hash;
                 }
-                const result = await orderService.createOrder(Number(props.product.productId), customerId, utils.format.parseNearAmount(price), ipfsHash);
+                const result = await orderService.createOrder(Number(props.product.productId), customerId, price, ipfsHash);
                 console.log('order id: ', result);
                 modal.hide();
                 notification['success']({

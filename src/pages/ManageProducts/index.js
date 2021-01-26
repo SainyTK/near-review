@@ -32,18 +32,8 @@ const ManageProductsPage = () => {
 
     const productsState = useProductsOf(window.accountId);
 
-    // {
-    //     name: 'The Home Hotel',
-    //     location: 'Bangkok, Thaialnd 10240',
-    //     imageUrl: 'https://cf.bstatic.com/images/hotel/max1024x768/181/181660540.jpg',
-    //     reviews: [
-    //         { title: '', content: '', score: 5 },
-    //         { title: '', content: '', score: 4 },
-    //         { title: '', content: '', score: 2 },
-    //         { title: '', content: '', score: 5 },
-    //         { title: '', content: '', score: 2 },
-    //     ]
-    // },
+
+    console.log(productsState.products);
 
     return (
         <StyledWrapper>

@@ -1,10 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
 import Author from './Author';
-import { MoreOutlined, PlusCircleOutlined, MinusCircleOutlined, LikeOutlined, CommentOutlined, FlagOutlined, CheckOutlined } from '@ant-design/icons'
+import { MoreOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import { Rate, Space, Typography } from 'antd';
 import Gallery from '../Gallery';
 import useProfile from '../../states/useProfile'
+import BottomAction from './BottomAction';
 
 const { Text, Title } = Typography;
 
@@ -31,11 +32,6 @@ const StyledWrapper = styled.div`
         color: var(--red);
     }
 
-    .bottom-action {
-        display: flex;
-        justify-content: space-between;
-    }
-
     .date {
         font-size: .9em;
     }
@@ -55,21 +51,13 @@ const ReviewCard = (props) => {
 
     const customer = review ? review.customer : '';
     const score = review ? review.score : 0;
+    const content = review ? review.content : '';
     const pros = review ? review.pros : [];
     const cons = review ? review.cons : [];
     const reviewedAt = review ? review.reviewedAt : 0;
     const images = review ? review.images : [];
 
     const { profile, isLoading } = useProfile(customer);
-
-    // const imageUrl = profile ? profile.imageUrl : null;
-    // const firstname = profile ? profile.firstname : '';
-    // const lastname = profile ? profile.lastname : '';
-    // const accountId = profile ? profile.accountId : '';
-
-    console.log(review);
-
-    const content = '';
 
     const postDate = new Date(reviewedAt).toLocaleDateString('en-EN', {
         day: 'numeric',
@@ -128,28 +116,10 @@ const ReviewCard = (props) => {
                 )
             }
 
-            <div className='bottom-action'>
-                <Space>
-                    <Space>
-                        <LikeOutlined />
-                        <Text>10</Text>
-                    </Space>
-                    <Space>
-                        <CommentOutlined />
-                        <Text>20</Text>
-                    </Space>
-                </Space>
-                <Space>
-                    <Space>
-                        <Text>Open Issue</Text>
-                        <FlagOutlined />
-                    </Space>
-                    <Space>
-                        <Text>Blockchain</Text>
-                        <CheckOutlined />
-                    </Space>
-                </Space>
-            </div>
+            <BottomAction
+                review={review}
+                onLike={props.onLike}
+            />
         </StyledWrapper>
     )
 }

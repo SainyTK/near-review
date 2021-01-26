@@ -44,7 +44,6 @@ const filterOptions = [
 const ProductPage = () => {
 
     const params = useParams();
-
     const { search } = params;
     const [seller, productId] = search ? search.split('-') : [];
 

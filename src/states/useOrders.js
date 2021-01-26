@@ -21,6 +21,10 @@ const useOrders = () => {
         return orders ? orders.filter(o => o.purchasedAt > 0 && o.reviewedAt === 0) : [];
     }
 
+    const onlyLikable = (orders) => {
+        return orders ? orders.filter(o => o.purchasedAt > 0 && o.gaveHelpfulAt === 0) : [];
+    }
+
     const onlyCustomer = (customer, orders) => {
         return orders ? orders.filter(o => customer === o.customer) : [];
     }
@@ -44,7 +48,8 @@ const useOrders = () => {
         onlyCustomer,
         onlySeller,
         onlyBetween,
-        onlyReviewable
+        onlyReviewable,
+        onlyLikable
     }
 }
 

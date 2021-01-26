@@ -6,7 +6,12 @@ import { utils } from 'near-api-js';
 const nearConfig = getConfig(process.env.NODE_ENV || 'development')
 
 const createOrder = async (productId, customer, price, ipfsHash) => {
-    return window.contract.create_order({ product_id: productId, customer, price, ipfs_hash: ipfsHash });
+    return window.contract.create_order({ 
+        product_id: productId, 
+        customer, 
+        price: utils.format.parseNearAmount(price), 
+        ipfs_hash: ipfsHash 
+    });
 }
 
 const purchase = (order) => {
@@ -28,7 +33,7 @@ const getOrders = async () => {
                 seller,
                 productId,
                 customer,
-                price: price / 1e+24,
+                price: +utils.format.formatNearAmount(price),
                 reviewValue,
                 ipfsHash,
                 purchasedAt: purchasedAt / 1000000,
