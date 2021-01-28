@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import useSWR, { mutate } from 'swr';
 import orderService from '../services/orderService';
 
@@ -5,37 +6,37 @@ const useOrders = () => {
     const key = `/orders`
     const { data, error } = useSWR(key, () => orderService.getOrders());
 
-    const onlyNotPurchased = (orders) => {
+    const onlyNotPurchased = useCallback((orders) => {
         return orders ? orders.filter(o => o.purchasedAt === 0) : [];
-    }
+    }, [])
 
-    const onlyPurchased = (orders) => {
+    const onlyPurchased = useCallback((orders) => {
         return orders ? orders.filter(o => o.purchasedAt > 0) : [];
-    }
+    }, [])
 
-    const onlyReviewed = (orders) => {
+    const onlyReviewed = useCallback((orders) => {
         return orders ? orders.filter(o => o.reviewedAt > 0) : [];
-    }
+    }, [])
 
-    const onlyReviewable = (orders) => {
+    const onlyReviewable = useCallback((orders) => {
         return orders ? orders.filter(o => o.purchasedAt > 0 && o.reviewedAt === 0) : [];
-    }
+    }, [])
 
-    const onlyLikable = (orders) => {
+    const onlyLikable = useCallback((orders) => {
         return orders ? orders.filter(o => o.purchasedAt > 0 && o.gaveHelpfulAt === 0) : [];
-    }
+    }, [])
 
-    const onlyCustomer = (customer, orders) => {
+    const onlyCustomer = useCallback((customer, orders) => {
         return orders ? orders.filter(o => customer === o.customer) : [];
-    }
+    }, [])
 
-    const onlySeller = (seller, orders) => {
+    const onlySeller = useCallback((seller, orders) => {
         return orders ? orders.filter(o => seller === o.seller) : [];
-    }
+    }, [])
 
-    const onlyBetween = (customer, seller, orders) => {
+    const onlyBetween = useCallback((customer, seller, orders) => {
         return orders ? orders.filter(o => o.customer === customer && o.seller === seller) : [];
-    }
+    }, [])
 
     return {
         orders: data,

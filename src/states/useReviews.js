@@ -1,20 +1,23 @@
+import { useMemo } from 'react';
 import useSWR, { mutate } from 'swr';
 import reviewService from '../services/reviewService';
+import useOrders from './useOrders';
 
-const useReviews = () => {
-    const key = `/reviews`
+const useReviews = (orderId) => {
+    const key = `/reviews/${orderId}`
     const { data, error } = useSWR(key, reviewService.getReviews);
+    const ordersState = useOrders();
 
-    const reviewMap = !data ? {} : data.reduce((prev, cur) => ({ ...prev, [cur.orderId]: cur }), {});
-
-    const orderReviews = (orders) => {
-        return orders ? orders.filter(o => reviewMap[o.orderId]).map(o => ({...reviewMap[o.orderId], ...o})) : []
-    }
+    const reviewMap = useMemo(() => {
+        return !data ? {} : data.reduce((prev, cur) => {
+            const order = ordersState.orders ? ordersState.orders[cur.orderId] : {};
+            return { ...prev, [cur.orderId]: { ...cur, ...order } }
+        }, {});
+    }, [data, ordersState.orders])
 
     return {
-        reviews: data,
+        reviews: Object.values(reviewMap),
         reviewMap,
-        orderReviews,
         isLoading: !error && !data,
         isError: error,
         update: () => mutate(key)

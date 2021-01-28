@@ -2,6 +2,7 @@ import ipfs from "../ipfs";
 import axios from 'axios';
 import getConfig from '../config';
 import { utils } from 'near-api-js';
+import { nsToMs } from "../common/format";
 
 const nearConfig = getConfig(process.env.NODE_ENV || 'development')
 
@@ -34,11 +35,11 @@ const getOrders = async () => {
                 productId,
                 customer,
                 price: +utils.format.formatNearAmount(price),
-                reviewValue,
+                reviewValue: +utils.format.formatNearAmount(reviewValue),
                 ipfsHash,
-                purchasedAt: purchasedAt / 1000000,
-                reviewedAt: reviewedAt / 1000000,
-                gaveHelpfulAt: gaveHelpfulAt / 1000000,
+                purchasedAt: nsToMs(purchasedAt),
+                reviewedAt: nsToMs(reviewedAt),
+                gaveHelpfulAt: nsToMs(gaveHelpfulAt),
                 ...ipfsData
             }
         });

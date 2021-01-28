@@ -8,8 +8,6 @@ const useProductsOf = (accountId) => {
         return products.map((p, index) => ({ ...p, owner: accountId, productId: index }));
     });
 
-    console.log('error', error);
-
     return {
         products: data,
         isLoading: !error && !data,

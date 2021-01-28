@@ -48,7 +48,7 @@ const WriteReview = ({ orders, ...props }) => {
 
     const handleWriteReview = () => {
         const order = orders[selected]
-        history.push(`/products/${params.search}/review?orderId=${order.orderId}`);
+        history.push(`/products/${params.seller}/${params.productId}/review/${order.orderId}`);
     }
 
     const renderActionText = () => {

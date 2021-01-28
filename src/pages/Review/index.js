@@ -1,5 +1,5 @@
 import { Button, Input, Rate, Space, Typography, Upload, Modal, Row, Col, notification } from 'antd';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import useQuery from '../../hooks/useQuery';
@@ -8,6 +8,10 @@ import { PlusOutlined } from '@ant-design/icons';
 import MultiInput from './components/MultiInput';
 import ipfs from '../../ipfs';
 import reviewService from '../../services/reviewService';
+import useReview from '../../states/useReview';
+import { formatDate } from '../../common/format';
+
+const { Paragraph } = Typography;
 
 const StyledWrapper = styled.div`
     padding: 20px 10%;
@@ -43,15 +47,13 @@ function getBase64(file) {
 const ReviewPage = () => {
 
     const params = useParams();
-    const query = useQuery();
-
     const history = useHistory();
-    const { search } = params;
-    const [seller, productId] = search.split('-');
-    const orderId = query.get('orderId');
+    const { seller, productId, orderId } = params;
 
     const productState = useProductOf(seller, productId);
     const { product } = productState;
+
+    const { review } = useReview(orderId);
 
     const [score, setScore] = useState(5);
     const [pros, setPros] = useState(['']);
@@ -64,35 +66,73 @@ const ReviewPage = () => {
         visible: false,
         image: '',
         title: '',
-    })
+    });
+
+    const [isDeleted, setIsDeleted] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+
+    useEffect(() => {
+        if (review) {
+            const latest = review ? review.versions[0] : null;
+
+            if (latest && latest.deletedAt === 0) {
+                setScore(latest.score);
+                setPros(latest.pros);
+                setCons(latest.cons);
+                setContent(latest.content);
+
+                setFileList(latest.images.map((image, index) => ({
+                    uid: index,
+                    file: null,
+                    url: image,
+                    status: 'done'
+                })));
+            }
+
+            setIsDeleted(latest.deletedAt > 0);
+        }
+
+        let isEditMode = review && review.verions[0].deletedAt === 0;
+        setEditMode(isEditMode);
+
+    }, [review]);
 
     const handlePost = async () => {
         setLoading(true);
         try {
             let images = [];
             if (fileList.length > 0) {
-                const promises = fileList.map((item) => ipfs.uploadImage(item.file));
+                const promises = fileList.filter(item => item.file).map((item) => ipfs.uploadImage(item.file));
                 const hashList = await Promise.all(promises);
-                images = hashList.map(hash => ipfs.hashToUrl(hash));
+                const uploadedImages = hashList.map(hash => ipfs.hashToUrl(hash));
+                const existingImages = fileList.filter(item => !item.file).map(item => item.url);
+                images = [...existingImages, ...uploadedImages]
             }
 
             const data = {
                 score,
-                pros,
-                cons,
+                pros: (pros.length === 1 && pros[0].length <= 0) ? [] : pros,
+                cons: (cons.length === 1 && cons[0].length <= 0) ? [] : cons,
                 content,
                 images
             };
 
             const res = await ipfs.uploadObject(data);
-            const result = reviewService.postReview(+orderId, res[0].hash);
+            if (editMode) {
+                await reviewService.updateReview(+orderId, res[0].hash);
+                notification['success']({
+                    message: 'Success',
+                    description: 'Post review successfully'
+                });
+            } else {
+                await reviewService.postReview(+orderId, res[0].hash);
+                notification['success']({
+                    message: 'Success',
+                    description: 'Update review successfully'
+                });
+            }
 
-            notification['success']({
-                message: 'Success',
-                description: 'Post review successfully'
-            });
-
-            history.replace(`/products/${search}`);
+            history.replace(`/products/${seller}/${productId}`);
         } catch (e) {
             notification['error']({
                 message: 'Failed',
@@ -127,11 +167,18 @@ const ReviewPage = () => {
             return <div>Loading...</div>
         } else if (productState.isError) {
             return <div>There is an error</div>
-        } else {
-
+        } else if (isDeleted) {
             return (
                 <div>
-                    <Typography.Title level={3}>Review on <Link to={`/products/${search}`}>{product.name}</Link></Typography.Title>
+                    <Typography.Title level={3}>Review on <Link to={`/products/${params.seller}/${params.productId}`}>{product.name}</Link></Typography.Title>
+                    <Paragraph>This review has been deleted since {formatDate(review.verions[0].deletedAt)}</Paragraph>
+                    <Button onClick={() => history.push(`/products/${params.seller}/${params.productId}`)}>Back to product</Button>
+                </div>
+            )
+        } else {
+            return (
+                <div>
+                    <Typography.Title level={3}>Review on <Link to={`/products/${params.seller}/${params.productId}`}>{product.name}</Link></Typography.Title>
                     <Row>
                         <Col md={24} lg={12}>
                             <div className='content'>
@@ -157,6 +204,7 @@ const ReviewPage = () => {
                                     <Typography.Title level={4}>Your Reviews</Typography.Title>
                                     <Input.TextArea
                                         rows={5}
+                                        value={content}
                                         placeholder='Describe your experience'
                                         onChange={e => setContent(e.target.value)}
                                     />
@@ -181,14 +229,15 @@ const ReviewPage = () => {
                                             setFileList([...newFileList]);
                                         }}
                                         onPreview={handlePreview}
+                                        transformFile={null}
                                     >
                                         {fileList.length >= 8 ? null : uploadButton}
                                     </Upload>
                                 </div>
                                 <div className='action'>
                                     <Space>
-                                        <Button onClick={() => history.push(`/products/${search}`)}>Cancel</Button>
-                                        <Button type='primary' onClick={handlePost} loading={loading}>Post</Button>
+                                        <Button onClick={() => history.push(`/products/${params.seller}/${params.productId}`)}>Cancel</Button>
+                                        <Button type='primary' onClick={handlePost} loading={loading}>{editMode ? 'Update' : 'Post'}</Button>
                                     </Space>
                                 </div>
                                 <Modal
@@ -201,13 +250,9 @@ const ReviewPage = () => {
                                 </Modal>
                             </div>
                         </Col>
-                        <Col md={0} lg={12}>
-
-                        </Col>
+                        <Col md={0} lg={12} />
                     </Row>
                 </div>
-
-
             )
         }
     }

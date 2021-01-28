@@ -49,8 +49,10 @@ const getProductsOf = async (account) => {
 }
 
 const getProductOf = async (account, productId) => {
+    console.log({account, productId});
     try {
         const data = await window.contract.get_product_of({ account_id: account, product_id: +productId });
+        console.log('data', data);
         const [pid, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
         const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
         return {
@@ -63,6 +65,7 @@ const getProductOf = async (account, productId) => {
             ...ipfsData
         }
     } catch (e) {
+        console.error(e);
         throw e;
     }
 }

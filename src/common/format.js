@@ -8,3 +8,7 @@ export const formatDate = (ms) => {
         year: 'numeric',
     }) : '';
 }
+
+export const nsToMs = (ns) => {
+    return ns / 1000000;
+}

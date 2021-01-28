@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { LikeOutlined, CommentOutlined, FlagOutlined, CheckOutlined } from '@ant-design/icons';
+import { LikeOutlined, CommentOutlined, FlagOutlined, CheckSquareOutlined } from '@ant-design/icons';
 import { Space, Typography } from 'antd';
 
 const { Text } = Typography;
@@ -9,56 +9,103 @@ const StyledWrapper = styled.div`
     display: flex;
     justify-content: space-between;
 
-    .like-btn {
+    .like-btn, .comment-btn, .open-issue-btn, .blockchain-btn {
         cursor: pointer;
-        transition: .2s ease-in-out;
-        transform: scale(1);
+        transition: .4s ease-in-out;
     }
+
+    .like-icon, .comment-icon {
+        color: var(--text-secondary);
+    }
+
+    .flag-icon {
+        color: var(--green);
+    }
+
+    .check-icon {
+        color: var(--blue);
+    }
+
     .like-btn:hover {
-        transform: scale(1.2);
         * {
-            color: blue;
+            color: var(--blue);
         }
     }
 
-    .comment-btn {
-        cursor: pointer;
-        transition: .2s ease-in-out;
-        transform: scale(1);
-    }
+    ${props => props.disableLike && `
+        .like-btn:hover {
+            * {
+                color: var(--text-secondary);
+            }
+        }
+
+        .like-btn {
+            cursor: unset;
+        }
+    `}
+
     .comment-btn:hover {
-        transform: scale(1.2);
         * {
-            color: blue;
+            color: var(--green);
         }
     }
+
+    .open-issue-btn:hover {
+        .open-issue-text {
+            color: black;
+        }
+    }
+
+    .blockchain-btn:hover {
+        .blockchain-text {
+            color: black;
+        }
+    }
+
+    ${props => props.isLike && `
+        .like-btn {
+            * {
+                color: var(--blue);
+            }
+        }
+        .like-btn {
+            cursor: unset;
+        }
+    `}
+
 `
 
 const BottomAction = (props) => {
 
     const { review } = props;
-    const likes = review ? review.likes : [];
+    const likes = review ? review.likes || [] : [];
+    const comments = review ? review.comments || [] : [];
+    const customer = review ? review.customer : '';
+
+    const isLike = likes.includes(window.accountId);
+
+    const disableLike = !window.accountId || window.accountId === customer;
 
     return (
-        <StyledWrapper>
+        <StyledWrapper isLike={isLike} disableLike={disableLike}>
             <Space>
                 <Space className={'like-btn'} onClick={props.onLike}>
-                    <LikeOutlined />
-                    <Text>{likes.length}</Text>
+                    <LikeOutlined className='like-icon'/>
+                    <Text type='secondary'>{likes.length}</Text>
                 </Space>
                 <Space className={'comment-btn'}>
-                    <CommentOutlined />
-                    <Text>20</Text>
+                    <CommentOutlined className='comment-icon'/>
+                    <Text type='secondary'>{comments.length}</Text>
                 </Space>
             </Space>
             <Space>
                 <Space className={'open-issue-btn'}>
-                    <Text>Open Issue</Text>
-                    <FlagOutlined />
+                    <Text type='secondary' className='open-issue-text'>Open Issue</Text>
+                    <FlagOutlined className='flag-icon'/>
                 </Space>
                 <Space className={'blockchain-btn'}>
-                    <Text>Blockchain</Text>
-                    <CheckOutlined />
+                    <Text type='secondary' className='blockchain-text'>Blockchain</Text>
+                    <CheckSquareOutlined className='check-icon'/>
                 </Space>
             </Space>
         </StyledWrapper>

@@ -38,7 +38,7 @@ const ProductList = ({ products, isLoading, isError, showInActive, editable, hid
                 .map((product, index) => (
                     <div className='product-card' key={index}>
                         <Space size='large'>
-                            <Link className='no-style' to={`/products/${product.owner}-${product.productId}`}>
+                            <Link className='no-style' to={`/products/${product.owner}/${product.productId}`}>
                                 <ProductCard
                                     product={product}
                                     index={index + 1}

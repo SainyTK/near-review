@@ -59,20 +59,48 @@ impl Order {
 #[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct Comment {
     owner: String,
-    ipfs_hash: String
+    ipfs_hash: String,
+    created_at: u64
+}
+
+#[derive(Default, BorshDeserialize, BorshSerialize)]
+pub struct Version {
+    ipfs_hash: String,
+    updated_at: u64,
+    deleted_at: u64,
+    block_index: u64
 }
 
 #[derive(Default, BorshDeserialize, BorshSerialize)]
 pub struct Review {
     order_id: u64,
-    ipfs_hash: String,
+    versions: Vec<Version>,
     helpfuls: Vec<String>,
     comments: Vec<Comment>
 }
 
 impl Review {
     fn new(order_id: u64, ipfs_hash: String) -> Self {
-        Self { order_id, ipfs_hash, helpfuls: vec![], comments: vec![]}
+        let ts = env::block_timestamp();
+        let block_index = env::block_index();
+        Self { 
+            order_id, 
+            versions: vec![Version { ipfs_hash, updated_at: ts, deleted_at: 0, block_index }], 
+            helpfuls: vec![], 
+            comments: vec![]
+        }
+    }
+
+    fn update(&mut self, ipfs_hash: String) {
+        let ts = env::block_timestamp();
+        let block_index = env::block_index();
+        self.versions.insert(0 as usize, Version { ipfs_hash, updated_at: ts, deleted_at: 0, block_index });
+    }
+
+    fn delete(&mut self) {
+        let ts = env::block_timestamp();
+        let block_index = env::block_index();
+        self.versions.insert(0 as usize, Version { ipfs_hash: String::from(""), updated_at: ts, deleted_at: ts, block_index });
     }
 }
 
@@ -192,38 +220,51 @@ impl ReviewContract {
                 self.orders.replace(order_id, &order);
             }
         }
-
     }
 
-    pub fn update_product(
-        &mut self,
-        product_id: u64,
-        ipfs_hash: String,
-        price: U128,
-        review_value: U128,
-        allow_self_purchase: bool,
-    ) {
+    pub fn update_review(&mut self, order_id: u64, ipfs_hash: String) {
         let account_id = env::signer_account_id();
-        let products = self.products_of.get(&account_id);
-        match products {
+        let order = self.orders.get(order_id);
+        match order {
             None => {
-                assert!(false, "You have no product");
+                assert!(false, "Order not found");
+            },
+            Some (order) => {
+                assert!(order.customer == account_id, "Cannot use other's order");
+                assert!(order.reviewed_at > 0, "You have not yet posted a review");
+                let review = self.reviews.get(&order_id);
+                match review {
+                    None => {
+                        assert!(false, "Review not found");
+                    },
+                    Some (mut review) => {
+                        review.update(ipfs_hash);
+                        self.reviews.insert(&order_id, &review);
+                    }
+                }
             }
-            Some(mut product_list) => {
-                if (product_list.len() as u64) > product_id {
-                    let product = Product {
-                        product_id,
-                        owner: account_id.clone(),
-                        ipfs_hash,
-                        price: u128::from(price),
-                        review_value: u128::from(review_value),
-                        allow_self_purchase,
-                    };
+        }
+    }
 
-                    product_list[product_id as usize] = product;
-                    self.products_of.insert(&account_id, &product_list);
-                } else {
-                    assert!(false, "Product not found");
+    pub fn delete_review(&mut self, order_id: u64) {
+        let account_id = env::signer_account_id();
+        let order = self.orders.get(order_id);
+        match order {
+            None => {
+                assert!(false, "Order not found");
+            },
+            Some (order) => {
+                assert!(order.customer == account_id, "Cannot use other's order");
+                assert!(order.reviewed_at > 0, "You have not yet posted a review");
+                let review = self.reviews.get(&order_id);
+                match review {
+                    None => {
+                        assert!(false, "Review not found");
+                    },
+                    Some (mut review) => {
+                        review.delete();
+                        self.reviews.insert(&order_id, &review);
+                    }
                 }
             }
         }
@@ -444,10 +485,13 @@ impl ReviewContract {
             .collect()
     }
 
-    pub fn get_reviews(self) -> Vec<(u64, String, Vec<String>)> {
+    pub fn get_reviews(self) -> Vec<(u64, Vec<(String, u64, u64, u64)>, Vec<String>)> {
         self.reviews.iter().map(|review| {
-            let Review { order_id, ipfs_hash, helpfuls, comments: _ } = review.1;
-            (order_id, ipfs_hash, helpfuls)
+            let Review { order_id, versions, helpfuls, comments: _ } = review.1;
+            let version_list = versions.iter().map(|version| {
+                (version.ipfs_hash.clone(), version.updated_at, version.deleted_at, version.block_index)
+            }).collect();
+            (order_id, version_list, helpfuls)
         }).collect()
     }
 }

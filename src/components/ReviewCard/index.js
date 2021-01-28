@@ -2,12 +2,15 @@ import React from 'react'
 import styled from 'styled-components'
 import Author from './Author';
 import { MoreOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
-import { Rate, Space, Typography } from 'antd';
+import { Rate, Space, Typography, Dropdown, Menu, Modal } from 'antd';
 import Gallery from '../Gallery';
 import useProfile from '../../states/useProfile'
 import BottomAction from './BottomAction';
+import { Link } from 'react-router-dom';
+import { formatDate } from '../../common/format';
+import reviewService from '../../services/reviewService';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 const StyledWrapper = styled.div`
     background-color: white;
@@ -43,19 +46,30 @@ const StyledWrapper = styled.div`
     .media-container {
         margin-bottom: 10px;
     }
+
+    .more-icon {
+        cursor: pointer;
+    }
 `
 
 const ReviewCard = (props) => {
 
-    const { review } = props;
+    const { review, onDelete } = props;
 
+    const latest = review ? review.versions[0] : null;
+
+    const seller = review ? review.seller : '';
+    const productId = review ? review.productId : '';
+    const orderId = review ? review.orderId : '';
     const customer = review ? review.customer : '';
-    const score = review ? review.score : 0;
-    const content = review ? review.content : '';
-    const pros = review ? review.pros : [];
-    const cons = review ? review.cons : [];
-    const reviewedAt = review ? review.reviewedAt : 0;
-    const images = review ? review.images : [];
+
+    const score = latest ? latest.score : 0;
+    const content = latest ? latest.content : '';
+    const pros = latest ? latest.pros : [];
+    const cons = latest ? latest.cons : [];
+    const reviewedAt = latest ? latest.updatedAt : 0;
+    const deletedAt = latest ? latest.deletedAt : 0;
+    const images = latest ? latest.images : [];
 
     const { profile, isLoading } = useProfile(customer);
 
@@ -63,63 +77,105 @@ const ReviewCard = (props) => {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
-    })
+    });
+
+    const openDeleteModal = () => {
+        Modal.confirm({
+            title: 'Delete a review',
+            content: 'Are you sure to delete this review ?',
+            onCancel: () => {},
+            onOk: async () => {
+                await reviewService.deleteReview(orderId);
+                onDelete && onDelete();
+            }
+        })
+    }
+
+    const menu = (
+        <Menu style={{ minWidth: 140 }}>
+            <Menu.Item key="0">
+                <Link to={`/products/${seller}/${productId}/review/${orderId}`}><Text>Edit</Text></Link>
+            </Menu.Item>
+            <Menu.Item key="1" onClick={openDeleteModal}>
+                <Text>Delete</Text>
+            </Menu.Item>
+        </Menu>
+    );
+
+    const renderContent = () => {
+        if (deletedAt > 0) {
+            return (
+                <div>
+                    <Paragraph>This review has been deleted since {formatDate(deletedAt)}</Paragraph>
+                </div>
+            )
+        } else {
+            return (
+                <div>
+                    <div className='rating-container'>
+                        <Space>
+                            <Rate value={score} allowHalf disabled />
+                            <Text type='secondary' className='date'>{postDate}</Text>
+                        </Space>
+                    </div>
+                    <div>
+                        <Text>{content}</Text>
+                    </div>
+                    <div>
+                        <Title level={5}>Pros & Cons</Title>
+                        <div>
+                            {
+                                pros.map((pro, index) => (
+                                    <div className='opinion-item' key={index}>
+                                        <Space>
+                                            <PlusCircleOutlined className='plus-icon' />
+                                            <Text>{pro}</Text>
+                                        </Space>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                        <div>
+                            {
+                                cons.map((con, index) => (
+                                    <div className='opinion-item' key={index}>
+                                        <Space>
+                                            <MinusCircleOutlined className='minus-icon' />
+                                            <Text>{con}</Text>
+                                        </Space>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                    {
+                        images.length > 0 && (
+                            <div className='media-container'>
+                                <Title level={5}>Medias</Title>
+                                <Gallery images={images} />
+                            </div>
+                        )
+                    }
+                    <BottomAction
+                        review={review}
+                        onLike={props.onLike}
+                    />
+                </div>
+            )
+        }
+    }
 
     return (
         <StyledWrapper>
             <div className='top'>
                 <Author className='review-author' {...profile} />
-                <MoreOutlined />
+                {window.accountId === customer && deletedAt === 0 && (
+                    <Dropdown overlay={menu}>
+                        <MoreOutlined className='more-icon' />
+                    </Dropdown>
+                )}
             </div>
-            <div className='rating-container'>
-                <Space>
-                    <Rate value={score} allowHalf disabled />
-                    <Text type='secondary' className='date'>{postDate}</Text>
-                </Space>
-            </div>
-            <div>
-                <Text>{content}</Text>
-            </div>
-            <div>
-                <Title level={5}>Pros & Cons</Title>
-                <div>
-                    {
-                        pros.map((pro, index) => (
-                            <div className='opinion-item' key={index}>
-                                <Space>
-                                    <PlusCircleOutlined className='plus-icon' />
-                                    <Text>{pro}</Text>
-                                </Space>
-                            </div>
-                        ))
-                    }
-                </div>
-                <div>
-                    {
-                        cons.map((con, index) => (
-                            <div className='opinion-item' key={index}>
-                                <Space>
-                                    <MinusCircleOutlined className='minus-icon' />
-                                    <Text>{con}</Text>
-                                </Space>
-                            </div>
-                        ))
-                    }
-                </div>
-            </div>
-            {
-                images.length > 0 && (
-                    <div className='media-container'>
-                        <Title level={5}>Medias</Title>
-                        <Gallery images={images} />
-                    </div>
-                )
-            }
-
-            <BottomAction
-                review={review}
-                onLike={props.onLike}
-            />
+            {renderContent()}
         </StyledWrapper>
     )
 }

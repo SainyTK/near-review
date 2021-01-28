@@ -28,8 +28,8 @@ export default function App() {
       <Topbar />
       <ContentWrapper>
         <Switch>
-          <Route path='/products/:search/review' component={ReviewPage} />
-          <Route path='/products/:search' component={ProductPage} />
+          <Route path='/products/:seller/:productId/review/:orderId' component={ReviewPage} />
+          <Route path='/products/:seller/:productId' component={ProductPage} />
           <Route path='/settingProfile' component={SettingProfilePage} />
           <Route path='/profile' component={ProfilePage} />
           <Route path='/manageProducts/:productId' component={ManageProductPage} />

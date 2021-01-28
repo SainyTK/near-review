@@ -44,13 +44,11 @@ const filterOptions = [
 const ProductPage = () => {
 
     const params = useParams();
-    const { search } = params;
-    const [seller, productId] = search ? search.split('-') : [];
+    const { seller, productId } = params;
 
     const { product } = useProductOf(seller, productId);
     const { products } = useProductsOf(window.accountId);
-    const { orders, onlyBetween, onlySeller, onlyNotPurchased, onlyReviewable, onlyReviewed } = useOrders();
-    const { orderReviews } = useReviews();
+    const { orders, onlyBetween, onlySeller, onlyNotPurchased, onlyReviewable } = useOrders();
 
     const isCustomer = products && products.length === 0;
     const isOwner = product && product.owner === window.accountId;
@@ -62,12 +60,6 @@ const ProductPage = () => {
 
     const openingOrders = onlyNotPurchased(customerOrders);
     const reviewableOrders = onlyReviewable(customerOrders);
-
-    const reviewedOrders = onlyReviewed(sellerOrders);
-
-    const reviews = orderReviews(reviewedOrders);
-
-    console.log(reviews);
 
     return (
         <StyledWrapper>
@@ -82,7 +74,7 @@ const ProductPage = () => {
             </div>
             <Row gutter={[10, 10]}>
                 <Col sm={{ span: 24, order: 1 }} lg={{ span: 16, order: 0 }}>
-                    <ReviewList reviews={reviews} />
+                    <ReviewList />
                 </Col>
                 <Col sm={{ span: 24, order: 0 }} lg={{ span: 8, order: 1 }}>
                     <Row gutter={[10, 10]}>
