@@ -10,6 +10,7 @@ import useProductsOf from '../../../states/useProductsOf';
 import { Row, Col, notification } from 'antd';
 import reviewService from '../../../services/reviewService'
 import useReviews from '../../../states/useReviews'
+import useProductReviews from '../../../states/useProductReviews'
 
 const StyledWrapper = styled.div`
     .review-item {
@@ -19,13 +20,15 @@ const StyledWrapper = styled.div`
 
 const ReviewList = (props) => {
 
-    const { seller } = useParams();
+    const { seller, productId } = useParams();
     const { products } = useProductsOf(window.accountId);
     const isCustomer = products && products.length === 0;
 
     const { orders, onlyBetween, onlyLikable, onlySeller } = useOrders();
-    const reviewsState = useReviews();
-    const reviews = onlySeller(seller, reviewsState.reviews);
+    const { reviews, ...reviewsState} = useProductReviews(seller, productId);
+    // const reviews = onlySeller(seller, reviewsState.reviews);
+
+    console.log('reviews', reviews);
 
     const modal = useVisibility();
     const [loading, setLoading] = useState(false);

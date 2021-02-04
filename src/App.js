@@ -13,6 +13,7 @@ import ProfilePage from './pages/Profile';
 import SettingProfilePage from './pages/SettingProfile';
 import ProductPage from './pages/Product';
 import styled from 'styled-components';
+import WriteReviewPage from './pages/WriteReview';
 import ReviewPage from './pages/Review';
 
 const ContentWrapper = styled.div`
@@ -28,7 +29,8 @@ export default function App() {
       <Topbar />
       <ContentWrapper>
         <Switch>
-          <Route path='/products/:seller/:productId/review/:orderId' component={ReviewPage} />
+          <Route path='/reviews/:orderId' component={ReviewPage} />
+          <Route path='/products/:seller/:productId/review/:orderId' component={WriteReviewPage} />
           <Route path='/products/:seller/:productId' component={ProductPage} />
           <Route path='/settingProfile' component={SettingProfilePage} />
           <Route path='/profile' component={ProfilePage} />

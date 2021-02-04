@@ -3,8 +3,8 @@ import useSWR, { mutate } from 'swr';
 import reviewService from '../services/reviewService';
 import useOrders from './useOrders';
 
-const useReviews = (orderId) => {
-    const key = `/reviews/${orderId}`
+const useReviews = () => {
+    const key = `/reviews`
     const { data, error } = useSWR(key, reviewService.getReviews);
     const ordersState = useOrders();
 

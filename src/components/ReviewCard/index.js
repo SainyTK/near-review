@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import Author from './Author';
 import { MoreOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
-import { Rate, Space, Typography, Dropdown, Menu, Modal } from 'antd';
+import { Rate, Space, Typography, Dropdown, Menu, Modal, Badge, Tag } from 'antd';
 import Gallery from '../Gallery';
 import useProfile from '../../states/useProfile'
 import BottomAction from './BottomAction';
@@ -54,36 +54,35 @@ const StyledWrapper = styled.div`
 
 const ReviewCard = (props) => {
 
-    const { review, onDelete } = props;
+    const { review, onDelete, onLike } = props;
 
-    const latest = review ? review.versions[0] : null;
+    const version = props.version || 0;
+
+    const versions = review ? review.versions : [];
+    const displayed = review ? review.versions[version] : null;
 
     const seller = review ? review.seller : '';
     const productId = review ? review.productId : '';
     const orderId = review ? review.orderId : '';
     const customer = review ? review.customer : '';
 
-    const score = latest ? latest.score : 0;
-    const content = latest ? latest.content : '';
-    const pros = latest ? latest.pros : [];
-    const cons = latest ? latest.cons : [];
-    const reviewedAt = latest ? latest.updatedAt : 0;
-    const deletedAt = latest ? latest.deletedAt : 0;
-    const images = latest ? latest.images : [];
+    const score = displayed ? displayed.score : 0;
+    const content = displayed ? displayed.content : '';
+    const pros = displayed ? displayed.pros : [];
+    const cons = displayed ? displayed.cons : [];
+    const images = displayed ? displayed.images : [];
 
-    const { profile, isLoading } = useProfile(customer);
+    const reviewedAt = displayed ? displayed.updatedAt : 0;
+    const deletedAt = displayed ? displayed.deletedAt : 0;
+    const cancelledAt = displayed ? displayed.cancelledAt : 0;
 
-    const postDate = new Date(reviewedAt).toLocaleDateString('en-EN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
+    const { profile } = useProfile(customer);
 
     const openDeleteModal = () => {
         Modal.confirm({
             title: 'Delete a review',
             content: 'Are you sure to delete this review ?',
-            onCancel: () => {},
+            onCancel: () => { },
             onOk: async () => {
                 await reviewService.deleteReview(orderId);
                 onDelete && onDelete();
@@ -102,67 +101,92 @@ const ReviewCard = (props) => {
         </Menu>
     );
 
-    const renderContent = () => {
-        if (deletedAt > 0) {
-            return (
-                <div>
-                    <Paragraph>This review has been deleted since {formatDate(deletedAt)}</Paragraph>
-                </div>
-            )
+    const renderBadge = () => {
+        if (versions.length - 1 === version) {
+            return null;
         } else {
+            let tag = null;
+            if (deletedAt > 0) {
+                tag = <Tag>Deleted</Tag>
+            } else if (cancelledAt > 0) {
+                tag = <Tag color='red'>Cancelled</Tag>
+            } else {
+                tag = <Tag color='orange'>Updated</Tag>
+            }
+
             return (
-                <div>
-                    <div className='rating-container'>
-                        <Space>
-                            <Rate value={score} allowHalf disabled />
-                            <Text type='secondary' className='date'>{postDate}</Text>
-                        </Space>
-                    </div>
-                    <div>
-                        <Text>{content}</Text>
-                    </div>
-                    <div>
-                        <Title level={5}>Pros & Cons</Title>
-                        <div>
-                            {
-                                pros.map((pro, index) => (
-                                    <div className='opinion-item' key={index}>
-                                        <Space>
-                                            <PlusCircleOutlined className='plus-icon' />
-                                            <Text>{pro}</Text>
-                                        </Space>
-                                    </div>
-                                ))
-                            }
-                        </div>
-                        <div>
-                            {
-                                cons.map((con, index) => (
-                                    <div className='opinion-item' key={index}>
-                                        <Space>
-                                            <MinusCircleOutlined className='minus-icon' />
-                                            <Text>{con}</Text>
-                                        </Space>
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    </div>
-                    {
-                        images.length > 0 && (
-                            <div className='media-container'>
-                                <Title level={5}>Medias</Title>
-                                <Gallery images={images} />
-                            </div>
-                        )
-                    }
-                    <BottomAction
-                        review={review}
-                        onLike={props.onLike}
-                    />
-                </div>
+                <Link to={`/reviews/${orderId}/track`}>
+                    {tag}
+                </Link>
             )
         }
+    }
+
+    const renderContent = () => {
+
+        return (
+            <div>
+                <div className='rating-container'>
+                    <Space>
+                        <Rate value={score} allowHalf disabled />
+                        <Text type='secondary' className='date'>{formatDate(reviewedAt)}</Text>
+                        {renderBadge()}
+                    </Space>
+                </div>
+                <div>
+                    {
+                        (deletedAt > 0) ? (
+                            <>
+                                <Paragraph>This review has been deleted since {formatDate(deletedAt)}</Paragraph>
+                            </>
+                        ) : (
+                                <>
+                                    <Text>{content}</Text>
+                                </>
+                            )
+                    }
+                </div>
+                <div>
+                    <Title level={5}>Pros & Cons</Title>
+                    <div>
+                        {
+                            pros && pros.map((pro, index) => (
+                                <div className='opinion-item' key={index}>
+                                    <Space>
+                                        <PlusCircleOutlined className='plus-icon' />
+                                        <Text>{pro}</Text>
+                                    </Space>
+                                </div>
+                            ))
+                        }
+                    </div>
+                    <div>
+                        {
+                            cons && cons.map((con, index) => (
+                                <div className='opinion-item' key={index}>
+                                    <Space>
+                                        <MinusCircleOutlined className='minus-icon' />
+                                        <Text>{con}</Text>
+                                    </Space>
+                                </div>
+                            ))
+                        }
+                    </div>
+                </div>
+                {
+                    images && images.length > 0 && (
+                        <div className='media-container'>
+                            <Title level={5}>Medias</Title>
+                            <Gallery images={images} />
+                        </div>
+                    )
+                }
+                <BottomAction
+                    review={review}
+                    onLike={onLike}
+                />
+            </div>
+        )
     }
 
     return (
