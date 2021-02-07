@@ -10,7 +10,7 @@ const createOrder = async (productId, customer, price, ipfsHash) => {
     return window.contract.create_order({ 
         product_id: productId, 
         customer, 
-        price: utils.format.parseNearAmount(price), 
+        price: utils.format.parseNearAmount(price.toString()), 
         ipfs_hash: ipfsHash 
     });
 }

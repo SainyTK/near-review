@@ -5,8 +5,14 @@ const useProductOf = (accountId, productId) => {
     const key = `/products/${accountId}/${productId}`
 
     const { data, error } = useSWR(key, async () => {
-        const product = await productService.getProductOf(accountId, productId);
-        return { ...product, owner: accountId, productId }
+        try {
+            const product = await productService.getProductOf(accountId, productId);
+            return { ...product, owner: accountId, productId }
+        } catch (e) {
+            console.error(e);
+            return { owner: accountId, productId }
+        }
+
     });
 
     return {

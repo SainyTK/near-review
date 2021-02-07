@@ -49,20 +49,22 @@ const getProductsOf = async (account) => {
 }
 
 const getProductOf = async (account, productId) => {
-    console.log({account, productId});
     try {
-        const data = await window.contract.get_product_of({ account_id: account, product_id: +productId });
-        console.log('data', data);
-        const [pid, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
-        const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
-        return {
-            productId: pid,
-            owner,
-            ipfsHash,
-            price: +utils.format.formatNearAmount(price),
-            reviewValue: +utils.format.formatNearAmount(reviewValue),
-            allowSelfPurchase,
-            ...ipfsData
+        if (account === null || account === undefined || productId === null || productId === undefined || account === '')
+            return {};
+        else {
+            const data = await window.contract.get_product_of({ account_id: account, product_id: +productId });
+            const [pid, owner, ipfsHash, price, reviewValue, allowSelfPurchase] = data;
+            const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
+            return {
+                productId: pid,
+                owner,
+                ipfsHash,
+                price: +utils.format.formatNearAmount(price),
+                reviewValue: +utils.format.formatNearAmount(reviewValue),
+                allowSelfPurchase,
+                ...ipfsData
+            }
         }
     } catch (e) {
         console.error(e);

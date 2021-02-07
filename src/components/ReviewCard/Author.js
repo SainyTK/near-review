@@ -2,8 +2,8 @@ import { Space, Typography } from 'antd';
 import Avatar from 'antd/lib/avatar/avatar';
 import React from 'react'
 import styled from 'styled-components'
-import avatarImg from '../../assets/images/avatar.jpg';
 import useProfile from '../../states/useProfile';
+import UserAvatar from './UserAvatar';
 
 const { Text, Title } = Typography;
 
@@ -20,7 +20,6 @@ const StyledWrapper = styled.div`
 
 const Author = (props) => {
 
-    const imageUrl = props ? props.imageUrl : null;
     const firstname = props ? props.firstname : '';
     const lastname = props ? props.lastname : '';
     const accountId = props ? props.accountId : '';
@@ -35,7 +34,7 @@ const Author = (props) => {
     return (
         <StyledWrapper className={props.className} style={props.style}>
             <Space align='start'>
-                <Avatar className='avatar' src={imageUrl || avatarImg} size={32} />
+                <UserAvatar className='avatar' accountId={accountId} size={32} />
                 <div>
                     <div className='name-panel'>
                         <Space align='baseline'>

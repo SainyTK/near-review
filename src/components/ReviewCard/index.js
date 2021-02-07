@@ -141,7 +141,7 @@ const ReviewCard = (props) => {
                             </>
                         ) : (
                                 <>
-                                    <Text>{content}</Text>
+                                    <pre>{content}</pre>
                                 </>
                             )
                     }

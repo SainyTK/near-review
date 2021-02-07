@@ -47,7 +47,7 @@ const OrderCard = ({ order, selected, ...props }) => {
     return (
         <StyledWrapper
             onClick={handleClick}
-            style={{ cursor: ['write-review', 'give-helpful'].includes(type)  ? 'pointer' : 'none' }}
+            style={{ cursor: ['write-review', 'give-helpful'].includes(type)  ? 'pointer' : 'unset' }}
             selected={selected}
         >
             <Row gutter={[10, 10]}>

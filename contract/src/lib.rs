@@ -352,6 +352,22 @@ impl ReviewContract {
         }
     }
 
+    pub fn create_comment(&mut self, target_id: u64, ipfs_hash: String) {
+        let review = self.reviews.get(&target_id);
+        match (review) {
+            None => {
+                assert!(false, "Target not found");
+            },
+            Some (mut review) => {
+                let account_id = env::signer_account_id();
+                let now = env::block_timestamp();
+                let comment = Comment{owner: account_id, ipfs_hash, created_at: now};
+                review.comments.push(comment);
+                self.reviews.insert(&target_id, &review);
+            }
+        }
+    }
+
     pub fn get_all_products(self) -> Vec<(u64, String, String, U128, U128, bool)> {
         self.products_of
             .iter()
@@ -485,13 +501,16 @@ impl ReviewContract {
             .collect()
     }
 
-    pub fn get_reviews(self) -> Vec<(u64, Vec<(String, u64, u64, u64)>, Vec<String>)> {
+    pub fn get_reviews(self) -> Vec<(u64, Vec<(String, u64, u64, u64)>, Vec<String>, Vec<(String, String, u64)>)> {
         self.reviews.iter().map(|review| {
-            let Review { order_id, versions, helpfuls, comments: _ } = review.1;
+            let Review { order_id, versions, helpfuls, comments } = review.1;
             let version_list = versions.iter().map(|version| {
                 (version.ipfs_hash.clone(), version.updated_at, version.deleted_at, version.block_index)
             }).collect();
-            (order_id, version_list, helpfuls)
+            let comment_list = comments.iter().map(|comment| {
+                (comment.owner.clone(), comment.ipfs_hash.clone(), comment.created_at)
+            }).collect();
+            (order_id, version_list, helpfuls, comment_list)
         }).collect()
     }
 }

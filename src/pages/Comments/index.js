@@ -6,6 +6,8 @@ import ReviewCard from '../../components/ReviewCard';
 import { Typography } from 'antd';
 import useProfile from '../../states/useProfile';
 import useProductOf from '../../states/useProductOf';
+import Comment from '../../components/Comment'
+import CommentForm from '../../components/CommentForm';
 
 const StyledWrapper = styled.div`
     padding: 20px 10%;
@@ -21,7 +23,7 @@ const StyledWrapper = styled.div`
 
 `
 
-const ReviewPage = () => {
+const CommentsPage = () => {
 
     const params = useParams();
     const { orderId } = params;
@@ -30,10 +32,12 @@ const ReviewPage = () => {
     const customer = review ? review.customer : '';
     const seller = review ? review.seller : '';
     const productId = review ? review.productId : 0;
-    const versions = review ? review.versions : [];
+    const comments = review ? review.comments || [] : [];
 
     const { profile } = useProfile(customer);
-    const username = profile ? `${profile.firstname} ${profile.lastname}` : ''
+    const firstname = profile ? profile.firstname : null;
+    const lastname = profile ? profile.lastname : null;
+    const displayName = (firstname && lastname) ? `${firstname} ${lastname}` : customer;
 
     const { product } = useProductOf(seller, productId);
     const productName = product ? product.name : '';
@@ -42,18 +46,24 @@ const ReviewPage = () => {
         <StyledWrapper>
             <Typography.Title level={3}>
                 <span>Review on <Link to={`/products/${seller}/${productId}`}>{productName}</Link></span>
-                <span> by <Link to={`/profile/${customer}`}>{username}</Link></span>
+                <span> by <Link to={`/profile/${customer}`}>{displayName}</Link></span>
             </Typography.Title>
-            {
-                versions.map((v, i) => (
-                    <div key={i} className='review-item'>
-                        <ReviewCard review={review} version={i} />
-                        {i < versions.length - 1 && <Typography.Title type='secondary' className='div' level={2}> . . .</Typography.Title>}
-                    </div>
-                ))
-            }
+            <div style={{ marginBottom: 10 }}>
+                <ReviewCard review={review} />
+            </div>
+            <div>
+                <Typography.Title level={3}>Comments {comments.length}</Typography.Title>
+                <div>
+                    {
+                        comments.map((comment, index) => (
+                            <Comment key={index} comment={comment} />
+                        ))
+                    }
+                </div>
+            </div>
+            <CommentForm targetId={orderId}/>
         </StyledWrapper>
     )
 }
 
-export default ReviewPage
+export default CommentsPage

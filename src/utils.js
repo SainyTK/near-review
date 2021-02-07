@@ -27,7 +27,8 @@ export async function initContract() {
       'post_review',
       'give_helpful',
       'update_review',
-      'delete_review'
+      'delete_review',
+      'create_comment'
     ],
   })
 }

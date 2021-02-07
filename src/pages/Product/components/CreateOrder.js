@@ -1,11 +1,15 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import svgOrder from '../../../assets/images/order.svg';
-import { Button, Rate, Modal, Row, Col, Typography, Input, Space, notification } from 'antd';
+import { Button, Rate, Modal, Row, Col, Typography, Input, Space, notification, AutoComplete } from 'antd';
 import useVisibility from '../../../hooks/useVisibility';
 import orderService from '../../../services/orderService';
 import ipfs from '../../../ipfs';
 import { utils } from 'near-api-js';
+import { useParams } from 'react-router-dom';
+import useProductOf from '../../../states/useProductOf'
+import customerService from '../../../services/customerService';
+import useCustomers from '../../../states/useCustomers';
 
 const StyledWrapper = styled.div`
     box-shadow: 0 0 6px 0 rgba(0,0,0,.15);
@@ -36,15 +40,38 @@ const StyledWrapper = styled.div`
 
 `
 
+const ModalWrapper = styled.div`
+    .auto-complete {
+        width: 100%;
+    }
+`
+
 const CreateOrder = (props) => {
 
     const modal = useVisibility();
 
+    const { customers } = useCustomers();
+
     const [customerId, setCustomerId] = useState('');
     const [price, setPrice] = useState(0);
     const [note, setNote] = useState('');
+    const [options, setOptions] = useState([]);
 
     const [loading, setLoading] = useState(false);
+
+    const params = useParams();
+    const { seller, productId } = params;
+
+    const { product } = useProductOf(seller, productId);
+
+    useEffect(() => {
+        if (product) {
+            setPrice(product.price);
+        }
+        if (customers) {
+            setOptions(customers.map(c => ({ value: c })));
+        }
+    }, [product, customers]);
 
     const handleCreateOrder = async () => {
         setLoading(true);
@@ -56,7 +83,7 @@ const CreateOrder = (props) => {
                     ipfsHash = res[0].hash;
                 }
                 const result = await orderService.createOrder(Number(props.product.productId), customerId, price, ipfsHash);
-                console.log('order id: ', result);
+                customerService.addCustomer(customerId);
                 modal.hide();
                 notification['success']({
                     message: 'Success',
@@ -68,6 +95,8 @@ const CreateOrder = (props) => {
         }
         setLoading(false);
     }
+
+    console.log(customerId)
 
     return (
         <StyledWrapper className={props.className} style={props.style}>
@@ -86,29 +115,37 @@ const CreateOrder = (props) => {
                 confirmLoading={loading}
                 title="Create an order"
             >
-                <Row gutter={[24, 24]}>
-                    <Col span={24}>
-                        <Typography.Text>Customer Account</Typography.Text>
-                    </Col>
-                    <Col span={24}>
-                        <Input type='text' value={customerId} onChange={e => setCustomerId(e.target.value)} />
-                    </Col>
-                    <Col span={24}>
-                        <Typography.Text>Price</Typography.Text>
-                    </Col>
-                    <Col span={24}>
-                        <Space>
-                            <Input type='number' value={price} onChange={e => setPrice(e.target.value)} />
-                            <Typography.Text>Ⓝ</Typography.Text>
-                        </Space>
-                    </Col>
-                    <Col span={24}>
-                        <Typography.Text>Notes</Typography.Text>
-                    </Col>
-                    <Col span={24}>
-                        <Input.TextArea rows={5} value={note} onChange={e => setNote(e.target.value)} />
-                    </Col>
-                </Row>
+                <ModalWrapper>
+                    <Row gutter={[24, 24]}>
+                        <Col span={24}>
+                            <Typography.Text>Customer Account</Typography.Text>
+                        </Col>
+                        <Col span={24}>
+                            <AutoComplete
+                                className='auto-complete'
+                                options={options}
+                                value={customerId}
+                                onChange={data => setCustomerId(data)}
+                                onSearch={data => setOptions(customers.filter(c => c !== data).map(c => ({ value: c })))}
+                            />
+                        </Col>
+                        <Col span={24}>
+                            <Typography.Text>Price</Typography.Text>
+                        </Col>
+                        <Col span={24}>
+                            <Space>
+                                <Input type='number' value={price} onChange={e => setPrice(e.target.value)} />
+                                <Typography.Text>Ⓝ</Typography.Text>
+                            </Space>
+                        </Col>
+                        <Col span={24}>
+                            <Typography.Text>Notes</Typography.Text>
+                        </Col>
+                        <Col span={24}>
+                            <Input.TextArea rows={5} value={note} onChange={e => setNote(e.target.value)} />
+                        </Col>
+                    </Row>
+                </ModalWrapper>
             </Modal>
         </StyledWrapper>
     )
