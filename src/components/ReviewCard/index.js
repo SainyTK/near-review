@@ -54,7 +54,7 @@ const StyledWrapper = styled.div`
 
 const ReviewCard = (props) => {
 
-    const { review, onDelete, onLike } = props;
+    const { review, onDelete, onLike, onOpenIssue } = props;
 
     const version = props.version || 0;
 
@@ -147,7 +147,7 @@ const ReviewCard = (props) => {
                     }
                 </div>
                 <div>
-                    <Title level={5}>Pros & Cons</Title>
+                    {(pros && cons && (pros.length > 0 || cons.length > 0)) && <Title level={5}>Pros & Cons</Title>}
                     <div>
                         {
                             pros && pros.map((pro, index) => (
@@ -184,6 +184,7 @@ const ReviewCard = (props) => {
                 <BottomAction
                     review={review}
                     onLike={onLike}
+                    onOpenIssue={onOpenIssue}
                 />
             </div>
         )

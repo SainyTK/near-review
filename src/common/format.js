@@ -12,3 +12,7 @@ export const formatDate = (ms) => {
 export const nsToMs = (ns) => {
     return ns / 1000000;
 }
+
+export const msToNs = (ms) => {
+    return ms * 1000000;
+}

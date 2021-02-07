@@ -52,6 +52,7 @@ const CreateOrder = (props) => {
 
     const { customers } = useCustomers();
 
+
     const [customerId, setCustomerId] = useState('');
     const [price, setPrice] = useState(0);
     const [note, setNote] = useState('');
@@ -62,7 +63,7 @@ const CreateOrder = (props) => {
     const params = useParams();
     const { seller, productId } = params;
 
-    const { product } = useProductOf(seller, productId);
+    const { product, ...productState } = useProductOf(seller, productId);
 
     useEffect(() => {
         if (product) {
@@ -84,6 +85,7 @@ const CreateOrder = (props) => {
                 }
                 const result = await orderService.createOrder(Number(props.product.productId), customerId, price, ipfsHash);
                 customerService.addCustomer(customerId);
+                productState.update();
                 modal.hide();
                 notification['success']({
                     message: 'Success',
@@ -95,8 +97,6 @@ const CreateOrder = (props) => {
         }
         setLoading(false);
     }
-
-    console.log(customerId)
 
     return (
         <StyledWrapper className={props.className} style={props.style}>

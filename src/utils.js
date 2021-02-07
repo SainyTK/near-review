@@ -17,7 +17,8 @@ export async function initContract() {
       'get_product_of',
       'get_profile_of',
       'get_orders',
-      'get_reviews'
+      'get_reviews',
+      'get_issues'
     ],
     changeMethods: [
       'create_product',
@@ -28,7 +29,10 @@ export async function initContract() {
       'give_helpful',
       'update_review',
       'delete_review',
-      'create_comment'
+      'create_comment',
+      'open_issue',
+      'vote',
+      'get_reward'
     ],
   })
 }

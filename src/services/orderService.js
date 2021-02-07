@@ -26,8 +26,7 @@ const getOrders = async () => {
     try {
         const contractData = await window.contract.get_orders();
         const promises = contractData.map(async data => {
-            const [orderId, seller, productId, customer, price, reviewValue, ipfsHash, purchasedAt, reviewedAt, gaveHelpfulAt] = data;
-            console.log(ipfsHash);
+            const [orderId, seller, productId, customer, price, reviewValue, ipfsHash, helpfulDeadline, purchasedAt, reviewedAt, gaveHelpfulAt] = data;
             const ipfsData = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}))
             return {
                 orderId,
@@ -37,6 +36,7 @@ const getOrders = async () => {
                 price: +utils.format.formatNearAmount(price),
                 reviewValue: +utils.format.formatNearAmount(reviewValue),
                 ipfsHash,
+                helpfulDeadline: nsToMs(helpfulDeadline),
                 purchasedAt: nsToMs(purchasedAt),
                 reviewedAt: nsToMs(reviewedAt),
                 gaveHelpfulAt: nsToMs(gaveHelpfulAt),
@@ -45,6 +45,7 @@ const getOrders = async () => {
         });
         return Promise.all(promises);
     } catch (e) {
+        console.error('error', e);
         throw e;
     }
 }

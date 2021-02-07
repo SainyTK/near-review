@@ -4,6 +4,7 @@ import { LikeOutlined, CommentOutlined, FlagOutlined, CheckSquareOutlined } from
 import { Space, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import useProductsOf from '../../states/useProductsOf';
+import useIssues from '../../states/useIssues';
 
 const { Text } = Typography;
 
@@ -34,18 +35,6 @@ const StyledWrapper = styled.div`
         }
     }
 
-    ${props => props.disableLike && `
-        .like-btn:hover {
-            * {
-                color: var(--text-secondary);
-            }
-        }
-
-        .like-btn {
-            cursor: unset;
-        }
-    `}
-
     .comment-btn:hover {
         * {
             color: var(--green);
@@ -63,6 +52,30 @@ const StyledWrapper = styled.div`
             color: black;
         }
     }
+
+    ${props => props.disableLike && `
+        .like-btn:hover {
+            * {
+                color: var(--text-secondary);
+            }
+        }
+
+        .like-btn {
+            cursor: unset;
+        }
+    `}
+
+    ${props => props.disableOpenIssue && `
+        .open-issue-btn:hover {
+            .open-issue-text {
+                color: var(--text-secondary);
+            }
+        }
+
+        .open-issue-btn {
+            cursor: unset;
+        }
+    `}
 
     ${props => props.isLike && `
         .like-btn {
@@ -87,18 +100,25 @@ const BottomAction = (props) => {
 
     const isLike = likes.includes(window.accountId);
     const { products } = useProductsOf(window.accountId);
+    const { issueMap } = useIssues();
 
     const disableLike = !window.accountId || window.accountId === customer || (products && products.length > 0);
+    const disableOpenIssue = !window.accountId || (products && products.length > 0);
 
-    console.log(disableLike, products)
+    const issue = issueMap[orderId];
 
     const handleLike = () => {
         if (props.onLike && !disableLike)
             props.onLike();
     }
 
+    const handleOpenIssue = () => {
+        if (props.onOpenIssue && !disableOpenIssue)
+            props.onOpenIssue();
+    }
+
     return (
-        <StyledWrapper isLike={isLike} disableLike={disableLike}>
+        <StyledWrapper isLike={isLike} disableLike={disableLike} disableOpenIssue={disableOpenIssue}>
             <Space>
                 <Space className={'like-btn'} onClick={handleLike}>
                     <LikeOutlined className='like-icon' />
@@ -112,10 +132,21 @@ const BottomAction = (props) => {
                 </Link>
             </Space>
             <Space>
-                <Space className={'open-issue-btn'} >
-                    <Text type='secondary' className='open-issue-text'>Open Issue</Text>
-                    <FlagOutlined className='flag-icon' />
-                </Space>
+                {
+                    issue ? (
+                        <Link to={`/issues/${issue.issueId}`}>
+                            <Space className={'open-issue-btn'}>
+                                <Text>Vote</Text>
+                                <FlagOutlined className='flag-icon' />
+                            </Space>
+                        </Link>
+                    ) : (
+                            <Space className={'open-issue-btn'} onClick={handleOpenIssue}>
+                                <Text type='secondary' className='open-issue-text'>Open Issue</Text>
+                                <FlagOutlined className='flag-icon' />
+                            </Space>
+                        )
+                }
                 <Space className={'blockchain-btn'}>
                     <Text type='secondary' className='blockchain-text'>Blockchain</Text>
                     <CheckSquareOutlined className='check-icon' />

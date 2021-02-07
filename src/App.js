@@ -16,6 +16,8 @@ import styled from 'styled-components';
 import WriteReviewPage from './pages/WriteReview';
 import ReviewPage from './pages/Review';
 import CommentsPage from './pages/Comments';
+import IssuesPage from './pages/Issues';
+import IssuePage from './pages/Issue';
 
 const ContentWrapper = styled.div`
   width: 100%;
@@ -30,6 +32,8 @@ export default function App() {
       <Topbar />
       <ContentWrapper>
         <Switch>
+          <Route path='/reviews/:issueId' component={IssuePage} />
+          <Route path='/issues' component={IssuesPage} />
           <Route path='/reviews/:orderId/comments' component={CommentsPage} />
           <Route path='/reviews/:orderId' component={ReviewPage} />
           <Route path='/products/:seller/:productId/review/:orderId' component={WriteReviewPage} />

@@ -38,6 +38,10 @@ const useOrders = () => {
         return orders ? orders.filter(o => o.customer === customer && o.seller === seller) : [];
     }, [])
 
+    const onlyRewardable = useCallback((orders) => {
+        return orders ? orders.filter(o => new Date().valueOf() > o.helpful_deadline && o.gaveHelpfulAt === 0) : []
+    }, []);
+
     return {
         orders: data,
         isLoading: !error && !data,
@@ -50,7 +54,8 @@ const useOrders = () => {
         onlySeller,
         onlyBetween,
         onlyReviewable,
-        onlyLikable
+        onlyLikable,
+        onlyRewardable
     }
 }
 
