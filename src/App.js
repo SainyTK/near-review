@@ -32,7 +32,7 @@ export default function App() {
       <Topbar />
       <ContentWrapper>
         <Switch>
-          <Route path='/reviews/:issueId' component={IssuePage} />
+          <Route path='/issues/:issueId' component={IssuePage} />
           <Route path='/issues' component={IssuesPage} />
           <Route path='/reviews/:orderId/comments' component={CommentsPage} />
           <Route path='/reviews/:orderId' component={ReviewPage} />

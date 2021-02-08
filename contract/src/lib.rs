@@ -544,11 +544,13 @@ impl ReviewContract {
                 assert!(false, "Issue not found");
             },
             Some (mut issue) => {
-                assert!(issue.deadline > now, "Issue is still opening");
+                assert!(now >= issue.deadline, "Issue is still opening");
                 let total_yes = issue.vote_yes.iter().fold(0, |acc, vote| acc + vote.1.value);
                 let total_no = issue.vote_no.iter().fold(0, |acc, vote| acc + vote.1.value);
-                let vote_yes = issue.vote_yes[&account_id].value;
-                let vote_no = issue.vote_no[&account_id].value;
+                let vote_yes = if issue.vote_yes.contains_key(&account_id) { issue.vote_yes[&account_id].value } else { 0 }; 
+                let vote_no = if issue.vote_no.contains_key(&account_id) { issue.vote_no[&account_id].value } else { 0 };
+                let got_reward_yes = if issue.vote_yes.contains_key(&account_id) { issue.vote_yes[&account_id].got_reward } else { true }; 
+                let got_reward_no = if issue.vote_yes.contains_key(&account_id) { issue.vote_yes[&account_id].got_reward } else { true }; 
                 let mut reward = 0;
                 let mut additional_reward = 0;
 
@@ -560,8 +562,9 @@ impl ReviewContract {
                     }
                 }
 
-                if total_yes > total_no {
-                    reward = (vote_yes / total_yes) * (total_no + additional_reward);
+                if total_yes > total_no && vote_yes > 0 {
+                    assert!(!got_reward_yes, "You've already got a reward");
+                    reward = vote_yes + (vote_yes / total_yes) * (total_no + additional_reward);
                     issue.vote_yes.insert(account_id.clone(), Vote { 
                         value: vote_yes, 
                         got_reward: true, 
@@ -576,25 +579,31 @@ impl ReviewContract {
                             self.reviews.insert(&issue.target_id, &review);
                         }
                     }
-                } else if total_no > total_yes {
-                    reward = (vote_no / total_no) * (total_yes + additional_reward);
+                } else if total_no > total_yes && vote_no > 0 {
+                    assert!(!got_reward_no, "You've already got a reward");
+                    reward = vote_no + (vote_no / total_no) * (total_yes + additional_reward);
                     issue.vote_no.insert(account_id.clone(), Vote { 
                         value: vote_no, 
                         got_reward: true, 
                         ipfs_hash: issue.vote_no[&account_id].ipfs_hash.clone()
                     });
                 } else {
+                    assert!(!got_reward_yes && !got_reward_no, "You've already got a reward");
                     reward = vote_yes + vote_no + ((vote_yes + vote_no) / (total_yes + total_no)) * additional_reward;
-                    issue.vote_yes.insert(account_id.clone(), Vote { 
-                        value: vote_yes, 
-                        got_reward: true, 
-                        ipfs_hash: issue.vote_yes[&account_id].ipfs_hash.clone()
-                    });
-                    issue.vote_no.insert(account_id.clone(), Vote { 
-                        value: vote_no, 
-                        got_reward: true, 
-                        ipfs_hash: issue.vote_no[&account_id].ipfs_hash.clone()
-                    });
+                    if issue.vote_yes.contains_key(&account_id) {
+                        issue.vote_yes.insert(account_id.clone(), Vote { 
+                            value: vote_yes, 
+                            got_reward: true, 
+                            ipfs_hash: issue.vote_yes[&account_id].ipfs_hash.clone()
+                        });
+                    }
+                    if issue.vote_no.contains_key(&account_id) {
+                        issue.vote_no.insert(account_id.clone(), Vote { 
+                            value: vote_no, 
+                            got_reward: true, 
+                            ipfs_hash: issue.vote_no[&account_id].ipfs_hash.clone()
+                        });
+                    }
                 }
 
                 Promise::new(account_id).transfer(reward);

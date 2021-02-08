@@ -42,15 +42,13 @@ const OpenIssue = (props) => {
 
     const openingIssues = onlyOpen(productIssues);
 
-    if (openingIssues.length === 0) return null;
-
     return (
         <StyledWrapper className={props.className} style={props.style}>
             <div className='card-text'>
                 <h4>{openingIssues.length} Issues are being opened</h4>
                 <p>Participate in voting to tackle malicious reviews</p>
                 <Link to={`/issues?seller=${seller}&productId=${productId}`}>
-                    <Button>Vote</Button>
+                    <Button>View</Button>
                 </Link>
             </div>
             <div className='svg-img'>

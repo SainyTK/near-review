@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { utils } from 'near-api-js';
+import useBalance from '../../states/useBalance'
 
 const StyledWrapper = styled.div`
 
@@ -23,19 +24,11 @@ const StyledWrapper = styled.div`
 
 const WalletInfo = (props) => {
 
-    // 24 decimal
-    const [balance, setBalance] = useState('');
-
-    useEffect(() => {
-        window.walletConnection.account().state().then(state => {
-            setBalance(state.amount);
-        })
-    }, []);
-
+    const { balance } = useBalance(window.accountId);
 
     return (
         <StyledWrapper {...props}>
-            <span className='balance'>{utils.format.formatNearAmount(balance, 5)} Ⓝ</span>
+            <span className='balance'>{balance} Ⓝ</span>
             <span className='address'>
                 <Link to='/profile' className='no-style'>
                     {window.accountId}

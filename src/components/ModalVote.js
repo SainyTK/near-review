@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Input, Modal, notification, Radio, Select, Space } from 'antd';
-import ReviewCard from '../../../components/ReviewCard';
+import { Input, Modal, notification, Radio, Select } from 'antd';
 import styled from 'styled-components'
-import useIssues from '../../../states/useIssues';
-import issueService from '../../../services/issueService';
-import useOrders from '../../../states/useOrders';
-import ipfs from '../../../ipfs';
+import useIssues from '..//states/useIssues';
+import issueService from '../services/issueService';
+import useOrders from '../states/useOrders';
+import ipfs from '../ipfs';
 
 const StyledWrapper = styled.div`
     .form-item {
@@ -46,7 +45,6 @@ const ModalVote = ({ visibility, selectedIssue, ...props }) => {
         setLoading(true);
         try {
             const res = await ipfs.uploadObject({ message })
-            // console.log(issue.issueId, selectedOrder, agree, res[0].hash, amount)
             await issueService.vote(issue.issueId, selectedOrder, agree, res[0].hash, amount);
             notification['success']({
                 message: 'Success',

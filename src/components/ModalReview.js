@@ -1,6 +1,6 @@
 import React from 'react'
 import { Modal } from 'antd';
-import ReviewCard from '../../../components/ReviewCard';
+import ReviewCard from './ReviewCard';
 
 const ModalReview = ({ visibility, review }) => {
     return (

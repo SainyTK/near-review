@@ -19,7 +19,7 @@ const vote = (issueId, orderId, agree, ipfsHash, value) => {
 }
 
 const getReward = (issueId) => {
-    return window.contract.get_reward({ issue_id, issueId })
+    return window.contract.get_reward({ issue_id: +issueId })
 }
 
 const getIssues = async () => {
@@ -30,12 +30,12 @@ const getIssues = async () => {
             const getVoteYesList = voteYes.map(async (vote) => {
                 const [voter, value, gotReward, ipfsHash] = vote;
                 const res = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
-                return { voter, value: +utils.format.formatNearAmount(value), gotReward, ...res }
+                return { voter, value: +utils.format.formatNearAmount(value), gotReward, agree: true, ...res }
             })
             const getVoteNoList = voteNo.map(async (vote) => {
                 const [voter, value, gotReward, ipfsHash] = vote;
                 const res = await axios.get(ipfs.hashToUrl(ipfsHash)).then(res => res.data).catch(() => ({}));
-                return { voter, value: +utils.format.formatNearAmount(value), gotReward, ...res }
+                return { voter, value: +utils.format.formatNearAmount(value), gotReward, agree: false, ...res }
             })
             const [voteYesList, voteNoList] = await Promise.all([
                 Promise.all(getVoteYesList),
@@ -50,7 +50,11 @@ const getIssues = async () => {
                 maxVote: +utils.format.formatNearAmount(maxVote),
                 additionalReward,
                 voteYesMap: voteYesList.reduce((prev, cur) => ({...prev, [cur.voter]: cur}), {}),
-                voteNoMap: voteNoList.reduce((prev, cur) => ({...prev, [cur.voter]: cur}), {})
+                voteNoMap: voteNoList.reduce((prev, cur) => ({...prev, [cur.voter]: cur}), {}),
+                voteYesList,
+                voteNoList,
+                totalYes: voteYesList.reduce((prev, cur) => prev + cur.value, 0),
+                totalNo: voteNoList.reduce((prev, cur) => prev + cur.value, 0)
             }
         });
         return Promise.all(promises);

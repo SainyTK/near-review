@@ -6,6 +6,13 @@ import useProfile from '../../states/useProfile'
 import Button from '../Button'
 import Author from '../ReviewCard/Author'
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
+import useIssues from '../../states/useIssues'
+import ModalReview from '../ModalReview';
+import useVisibility from '../../hooks/useVisibility';
+import useReview from '../../states/useReview';
+import useReviews from '../../states/useReviews';
+import ModalVote from '../ModalVote';
+import { Link } from 'react-router-dom'
 
 const StyledWrapper = styled.div`
     padding: 20px;
@@ -30,32 +37,61 @@ const StyledWrapper = styled.div`
         color: var(--red);
     }
 
-    .time {
+    .time, .result {
         font-size: .8em;
     }
 
     .voting {
-        cursor: pointer;
+        cursor: ${props => props.disableVote ? 'unset' : 'pointer'};
+    }
+
+    .result.win {
+        color:  var(--green);
+    }
+
+    .result.lose {
+        color:  var(--red);
     }
 `
 
-const IssueCard = ({ issue, onVoteYes, onVoteNo, onOpenReview }) => {
+const IssueCard = ({ issue }) => {
 
-    const { profile } = useProfile(issue.issuer);
+    const issueId = issue ? issue.issueId : null;
+    const issuer = issue ? issue.issuer : null;
+    const targetId = issue ? issue.targetId : null;
+    const voteYesList = issue ? issue.voteYesList : [];
+    const voteNoList = issue ? issue.voteNoList : [];
+    const voteYesMap = issue ? issue.voteYesMap : {};
+    const voteNoMap = issue ? issue.voteNoMap : {};
+    const deadline = issue ? issue.deadline : 0;
+    const totalYes = issue ? issue.totalYes : 0;
+    const totalNo = issue ? issue.totalNo : 0;
+    const createdAt = issue ? issue.createdAt : 0;
+    const message = voteYesMap[issuer] ? voteYesMap[issuer].message : '';
 
-    const voteYesList = Object.values(issue.voteYesMap)
-    const voteNoList = Object.values(issue.voteNoMap)
+    const { profile } = useProfile(issuer);
+
+    const { reviews } = useReviews();
+    const review = reviews ? reviews[targetId] : null;
+
     const totalVoteYes = voteYesList.reduce((prev, cur) => prev + Number(cur.value), 0);
     const totalVoteNo = voteNoList.reduce((prev, cur) => prev + Number(cur.value), 0);
 
     const [now, setNow] = useState(new Date().valueOf());
 
+    const reviewModal = useVisibility();
+    const voteModal = useVisibility();
+
+    const [agree, setAgree] = useState(true);
+
     let remainTime = '';
-    const diff = issue.deadline - now;
+    const diff = deadline - now;
     const remainDay = Math.floor(diff / (24 * 60 * 60 * 1000));
-    const remainHour =  Math.floor(diff / (60 * 60 * 1000) % 24);
-    const remainMinute =  Math.floor(diff / (60 * 1000) % 60);
-    const remainSecond =  Math.floor(diff / (1000) % 60);
+    const remainHour = Math.floor(diff / (60 * 60 * 1000) % 24);
+    const remainMinute = Math.floor(diff / (60 * 1000) % 60);
+    const remainSecond = Math.floor(diff / (1000) % 60);
+
+    const disableVote = diff <= 0;
 
     if (remainDay > 0)
         remainTime = `${remainDay} day `;
@@ -68,6 +104,21 @@ const IssueCard = ({ issue, onVoteYes, onVoteNo, onOpenReview }) => {
     else
         remainTime = `0 seconds`;
 
+    const voteYes = voteYesMap[accountId] ? voteYesMap[accountId].value : 0
+    const voteNo = voteNoMap[accountId] ? voteNoMap[accountId].value : 0
+
+    let result = '';
+    if (totalYes > totalNo) {
+        if (voteYes >= 0) result = 'Win';
+        else if (voteNo >= 0) result = 'Lose';
+    } else if (totalYes < totalNo) {
+        if (voteNo >= 0) result = 'Win';
+        else if (voteYes >= 0) result = 'Lose';
+    } else {
+        if (voteYes >= 0 || voteNo >= 0) result = 'Draw';
+        else result = 'Closed';
+    }
+
     useEffect(() => {
         let iv = setInterval(() => {
             setNow(new Date().valueOf());
@@ -76,32 +127,65 @@ const IssueCard = ({ issue, onVoteYes, onVoteNo, onOpenReview }) => {
         return () => clearInterval(iv);
     }, [issue]);
 
+    const handleVote = (agree) => {
+        if (true) {
+            if (agree) {
+                setAgree(true);
+                voteModal.show();
+            } else {
+                setAgree(false);
+                voteModal.show();
+            }
+        }
+    }
+
     return (
-        <StyledWrapper>
-            <div className='top-section'>
-                <Author {...profile} />
-                <Button onClick={onOpenReview}>See review</Button>
-            </div>
-            <Typography.Text type='secondary' className='time'>Issue opened on {formatDate(issue.createdAt)}</Typography.Text>
-            <pre>{issue.voteYesMap[issue.issuer].message}</pre>
-            <div className='bottom-action'>
-                <Space>
-                    <Space className='voting' onClick={onVoteYes}>
-                        <ArrowUpOutlined className='vote-up-icon' />
-                        <b>{totalVoteYes} Ⓝ </b>
-                        <div>agreed ({voteYesList.length} people) </div>
-                    </Space>
-                    <Space className='voting' onClick={onVoteNo}>
-                        <ArrowDownOutlined className='vote-down-icon' />
-                        <b>{totalVoteNo} Ⓝ </b>
-                        <div>disagreed ({voteNoList.length} people) </div>
-                    </Space>
-                </Space>
-                <div className='time'>
-                    Issue will be closed in {remainTime}
-                </div>
-            </div>
-        </StyledWrapper>
+        <div>
+            <Link to={`/issues/${issueId}`} className='no-style'>
+                <StyledWrapper disableVote={disableVote}>
+                    <div className='top-section'>
+                        <Author {...profile} />
+                        <Button onClick={e => { e.preventDefault(); reviewModal.show(); }}>See review</Button>
+                    </div>
+                    <Typography.Text type='secondary' className='time'>Issue opened on {formatDate(createdAt)}</Typography.Text>
+                    <pre>{message}</pre>
+                    <div className='bottom-action'>
+                        <Space>
+                            <Space className='voting' onClick={(e) => { e.preventDefault(); handleVote(true) }}>
+                                <ArrowUpOutlined className='vote-up-icon' />
+                                <b>{totalVoteYes} Ⓝ </b>
+                                <div>agreed ({voteYesList.length} people) </div>
+                            </Space>
+                            <Space className='voting' onClick={(e) => { e.preventDefault(); handleVote(false) }}>
+                                <ArrowDownOutlined className='vote-down-icon' />
+                                <b>{totalVoteNo} Ⓝ </b>
+                                <div>disagreed ({voteNoList.length} people) </div>
+                            </Space>
+                        </Space>
+                        {
+                            diff > 0 && (
+                                <div className='time'>
+                                    Issue will be closed in {remainTime}
+                                </div>
+                            )
+                        }
+                        {
+                            diff <= 0 && (
+                                <div className={`result ${result.toLowerCase()}`}>
+                                    {result}
+                                </div>
+                            )
+                        }
+
+                    </div>
+                </StyledWrapper>
+            </Link>
+            <>
+                <ModalReview visibility={reviewModal} review={review} />
+                <ModalVote visibility={voteModal} selectedIssue={issueId} agree={agree} />
+            </>
+        </div>
+
     )
 }
 
